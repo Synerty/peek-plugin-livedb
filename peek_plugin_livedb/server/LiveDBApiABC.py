@@ -1,17 +1,28 @@
 from abc import ABCMeta, abstractmethod
 
-from peek_plugin_livedb.tuples.DoSomethingTuple import DoSomethingTuple
+from peek_plugin_livedb.server.LiveDBReadApiABC import LiveDBReadApiABC
+from peek_plugin_livedb.server.LiveDBWriteApiABC import LiveDBWriteApiABC
 
 
 class LiveDBApiABC(metaclass=ABCMeta):
-
+    @property
     @abstractmethod
-    def doSomethingGood(self, somethingsDescription:str) -> DoSomethingTuple:
-        """ Add a New Task
+    def writeApi(self) -> LiveDBWriteApiABC:
+        """ LiveDB Write API
 
-        Add a new task to the users device.
+        This API is for all the methods that make changes to the LiveDB
 
-        :param somethingsDescription: An arbitrary string
-        :return: The computed result contained in a DoSomethingTuple tuple
+        :return: A reference to the LiveDBWriteApiABC instance
+
+        """
+
+    @property
+    @abstractmethod
+    def readApi(self) -> LiveDBReadApiABC:
+        """ LiveDB Read API
+
+        This API is for all the methods to read changes from the LiveDB
+
+        :return: A reference to the LiveDBReadApiABC instance
 
         """

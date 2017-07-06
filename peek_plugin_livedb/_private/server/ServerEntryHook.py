@@ -1,36 +1,31 @@
 import logging
 
-from peek_plugin_active_task.server.ActiveTaskApiABC import ActiveTaskApiABC
+from celery import Celery
+
 from peek_plugin_base.server.PluginServerEntryHookABC import PluginServerEntryHookABC
-
-from peek_plugin_livedb._private.storage import DeclarativeBase
-from peek_plugin_livedb._private.storage.DeclarativeBase import loadStorageTuples
-
 from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
-
+from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
+    PluginServerWorkerEntryHookABC
+from peek_plugin_livedb._private.server.controller.LiveDbController import \
+    LiveDbController
+from peek_plugin_livedb._private.server.controller.LiveDbImportController import \
+    LiveDbImportController
+from peek_plugin_livedb._private.storage import DeclarativeBase
+from peek_plugin_livedb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_livedb._private.tuples import loadPrivateTuples
 from peek_plugin_livedb.tuples import loadPublicTuples
-
-from .TupleDataObservable import makeTupleDataObservableHandler
-
-from .TupleActionProcessor import makeTupleActionProcessorHandler
-from .controller.MainController import MainController
-
-from .admin_backend import makeAdminBackendHandlers
-
-from .agent_handlers.RpcForAgent import RpcForAgent
-
-from .ServerToAgentRpcCallExample import ServerToAgentRpcCallExample
-
 from .LiveDBApi import LiveDBApi
-
-from .ExampleUseTaskApi import ExampleUseTaskApi
+from .TupleActionProcessor import makeTupleActionProcessorHandler
+from .TupleDataObservable import makeTupleDataObservableHandler
+from .admin_backend import makeAdminBackendHandlers
+from .controller.MainController import MainController
 
 logger = logging.getLogger(__name__)
 
 
-class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC):
+class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
+                      PluginServerWorkerEntryHookABC):
     def __init__(self, *args, **kwargs):
         """" Constructor """
         # Call the base classes constructor
@@ -97,25 +92,17 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC)
         self._loadedObjects.append(mainController)
         self._loadedObjects.append(makeTupleActionProcessorHandler(mainController))
 
-        # Initialise the RpcForAgent
-        self._loadedObjects.extend(RpcForAgent(mainController, self.dbSessionCreator)
-                                   .makeHandlers())
+        liveDbController = LiveDbController(self.dbSessionCreator)
+        self._loadedObjects.append(liveDbController)
 
-        # Initialise and start the RPC for Server
-        self._loadedObjects.append(ServerToAgentRpcCallExample().start())
+        liveDbImportController = LiveDbImportController(self.dbSessionCreator,
+                                                        self.getPgSequenceGenerator)
+        self._loadedObjects.append(liveDbImportController)
 
         # Initialise the API object that will be shared with other plugins
-        self._api = LiveDBApi(mainController)
+        self._api = LiveDBApi(liveDbController=liveDbController,
+                              liveDbImportController=liveDbImportController)
         self._loadedObjects.append(self._api)
-
-        # Get a reference for the Active Task
-        activeTaskApi = self.platform.getOtherPluginApi("peek_plugin_active_task")
-        assert isinstance(activeTaskApi, ActiveTaskApiABC), "Wrong activeTaskApi"
-
-        # Initialise the example code that will send the test task
-        self._loadedObjects.append(
-            ExampleUseTaskApi(mainController, activeTaskApi).start()
-        )
 
         logger.debug("Started")
 
@@ -150,3 +137,10 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC)
         platform service.
         """
         return self._api
+
+    ###### Implement PluginServerWorkerEntryHookABC
+
+    @property
+    def celeryApp(self) -> Celery:
+        from peek_plugin_livedb._private.worker.CeleryApp import celeryApp
+        return celeryApp

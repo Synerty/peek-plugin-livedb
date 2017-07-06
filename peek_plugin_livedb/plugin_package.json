@@ -12,9 +12,8 @@
         "server",
         "storage",
         "admin",
-        "client",
-        "mobile",
-        "agent"
+        "agent",
+        "worker"
     ],
     "server": {
     },
@@ -25,21 +24,10 @@
         "showHomeLink": true,
         "appDir": "_private/admin-app",
         "appModule": "livedb.module#LiveDBModule",
-        "moduleDir": "plugin-module",
-    },
-    "client": {
-    },
-    "mobile": {
-        "showHomeLink": true,
-        "appDir": "_private/mobile-app",
-        "appModule": "livedb.module#LiveDBModule",
-        "assetDir": "_private/mobile-assets",
-        "icon": "/assets/peek_plugin_livedb/icon.png",
         "moduleDir": "plugin-module"
     },
     "agent": {
     },
-    "desktop": {
-        "moduleDir": "plugin-module"
+    "worker": {
     }
 }

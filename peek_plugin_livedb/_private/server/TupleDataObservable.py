@@ -1,10 +1,6 @@
-from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
-
 from peek_plugin_livedb._private.PluginNames import livedbFilt
 from peek_plugin_livedb._private.PluginNames import livedbObservableName
-
-from .tuple_providers.StringIntTupleProvider import StringIntTupleProvider
-from peek_plugin_livedb._private.storage.StringIntTuple import StringIntTuple
+from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
 
 
 def makeTupleDataObservableHandler(ormSessionCreator):
@@ -19,10 +15,10 @@ def makeTupleDataObservableHandler(ormSessionCreator):
 
     """
     tupleObservable = TupleDataObservableHandler(
-                observableName=livedbObservableName,
-                additionalFilt=livedbFilt)
+        observableName=livedbObservableName,
+        additionalFilt=livedbFilt)
 
-    # Register TupleProviders here
-    tupleObservable.addTupleProvider(StringIntTuple.tupleName(),
-                                     StringIntTupleProvider(ormSessionCreator))
+    # # Register TupleProviders here
+    # tupleObservable.addTupleProvider(StringIntTuple.tupleName(),
+    #                                  StringIntTupleProvider(ormSessionCreator))
     return tupleObservable

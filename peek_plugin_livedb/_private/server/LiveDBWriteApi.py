@@ -1,5 +1,6 @@
 from typing import List
 
+import logging
 from twisted.internet import defer
 from twisted.internet.defer import Deferred
 
@@ -12,6 +13,7 @@ from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTupl
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 from peek_plugin_livedb.tuples.LiveDbRawValueTuple import LiveDbRawValueTuple
 
+logger = logging.getLogger(__name__)
 
 class LiveDBWriteApi(LiveDBWriteApiABC):
     def __init__(self, liveDbController: LiveDbController,
@@ -32,6 +34,7 @@ class LiveDBWriteApi(LiveDBWriteApiABC):
 
     def importLiveDbItems(self, modelSetName: str,
                           newItems: ImportLiveDbItemTuple) -> Deferred:
+        logger.debug("importLiveDbItems called for %s items (TODO)" % len(newItems))
         return defer.succeed(True)
 
     def prioritiseLiveDbValueAcquisition(self, modelSetName: str,

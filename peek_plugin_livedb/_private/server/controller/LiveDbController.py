@@ -32,6 +32,9 @@ class LiveDbController(object):
         # self._agents = []
         self._status = LiveDbStatus()
 
+    def shutdown(self):
+        pass
+
     @property
     def statusNameValues(self):
         ip = "TODO" # vortexClientIpPort(self._pofAgentVortexUuid)

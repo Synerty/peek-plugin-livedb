@@ -12,7 +12,7 @@ class LiveDbDisplayValueTuple(Tuple):
 
     """
     __tupleType__ = livedbTuplePrefix + 'LiveDbValueTuple'
-    __slots__ = ("key", "dataType", "value", "displayValue")
+    __slots__ = ("key", "dataType", "rawValue", "displayValue")
 
     DATA_TYPE_NUMBER_VALUE = LiveDbTuple.NUMBER_VALUE
     DATA_TYPE_STRING_VALUE = LiveDbTuple.STRING_VALUE

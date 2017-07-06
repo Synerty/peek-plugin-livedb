@@ -12,7 +12,7 @@ class ImportLiveDbItemTuple(Tuple):
 
     """
     __tupleType__ = livedbTuplePrefix + 'ImportLiveDbItemTuple'
-    __slots__ = ("key", "dataType", "value", "displayValue")
+    __slots__ = ("key", "dataType", "rawValue", "displayValue", "importHash")
 
     DATA_TYPE_NUMBER_VALUE = LiveDbTuple.NUMBER_VALUE
     DATA_TYPE_STRING_VALUE = LiveDbTuple.STRING_VALUE
@@ -22,9 +22,11 @@ class ImportLiveDbItemTuple(Tuple):
     DATA_TYPE_GROUP_PTR = LiveDbTuple.GROUP_PTR
 
     def __init__(self, key=None, dataType=None,
-                 rawValue=None, displayValue=None):
+                 rawValue=None, displayValue=None,
+                 importHash=None):
         # DON'T CALL SUPER INIT
         self.key = key
         self.dataType = dataType
         self.rawValue = rawValue
         self.displayValue = displayValue
+        self.importHash = importHash

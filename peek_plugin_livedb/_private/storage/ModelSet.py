@@ -12,7 +12,7 @@ class ModelSet(Tuple, DeclarativeBase):
     __tablename__ = 'ModelSet'
     __tupleType__ = livedbTuplePrefix + __tablename__
 
-    id = Column(Integer, primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     comment = Column(String)
 

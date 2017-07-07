@@ -3,7 +3,6 @@ from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
 from peek_plugin_livedb._private.storage.LiveDbTuple import LiveDbTuple
 from vortex.Tuple import Tuple, addTupleType
 
-
 @addTupleType
 class LiveDbDisplayValueTuple(Tuple):
     """ Live DB Display Value Tuple
@@ -11,7 +10,7 @@ class LiveDbDisplayValueTuple(Tuple):
     This tuple stores a value of a key in the Live DB database.
 
     """
-    __tupleType__ = livedbTuplePrefix + 'LiveDbValueTuple'
+    __tupleType__ = livedbTuplePrefix + 'LiveDbDisplayValueTuple'
     __slots__ = ("key", "dataType", "rawValue", "displayValue")
 
     DATA_TYPE_NUMBER_VALUE = LiveDbTuple.NUMBER_VALUE

@@ -31,6 +31,9 @@ class WorkerApi:
 
         :returns: An array of tuples.
         """
+        if not liveDbKeys:
+            return []
+
         liveDbKeys = set(liveDbKeys)  # Remove duplicates if any exist.
         qry = (
             ormSession.query(LiveDbItem)

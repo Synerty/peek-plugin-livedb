@@ -54,7 +54,7 @@ class LiveDBWriteApi(LiveDBWriteApiABC):
 
     def importLiveDbItems(self, modelSetName: str,
                           newItems: List[ImportLiveDbItemTuple]) -> Deferred:
-        return self._liveDbImportController.importDispLiveDbItems(modelSetName, newItems)
+        return self._liveDbImportController.importLiveDbItems(modelSetName, newItems)
 
     def prioritiseLiveDbValueAcquisition(self, modelSetName: str,
                                          liveDbKeys: List[str]) -> Deferred:

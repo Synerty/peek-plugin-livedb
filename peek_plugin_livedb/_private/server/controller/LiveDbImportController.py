@@ -27,8 +27,8 @@ class LiveDbImportController:
         self._readApi = None
 
     @inlineCallbacks
-    def importDispLiveDbItems(self, modelSetName: str,
-                              newItems: List[ImportLiveDbItemTuple]) -> Deferred:
+    def importLiveDbItems(self, modelSetName: str,
+                          newItems: List[ImportLiveDbItemTuple]) -> Deferred:
         """ Import Live DB Items
 
         1) set the  coordSetId
@@ -40,7 +40,7 @@ class LiveDbImportController:
         :return:
         """
 
-        newKeys = yield importLiveDbItems.wait(
+        newKeys = yield importLiveDbItems.delay(
             modelSetName=modelSetName,
             newItemsPayloadJson=Payload(tuples=newItems)._toJson())
 

@@ -23,17 +23,17 @@ class LiveDBApi(LiveDBApiABC):
                                         dbSessionCreator=dbSessionCreator,
                                         dbEngine=dbEngine)
 
-        def shutdown(self):
-            self._readApi.shutdown()
-            self._writeApi.shutdown()
+    def shutdown(self):
+        self._readApi.shutdown()
+        self._writeApi.shutdown()
 
-            self._readApi = None
-            self._writeApi = None
+        self._readApi = None
+        self._writeApi = None
 
-        @property
-        def writeApi(self) -> LiveDBWriteApiABC:
-            return self._writeApi
+    @property
+    def writeApi(self) -> LiveDBWriteApiABC:
+        return self._writeApi
 
-        @property
-        def readApi(self) -> LiveDBReadApiABC:
-            return self._readApi
+    @property
+    def readApi(self) -> LiveDBReadApiABC:
+        return self._readApi

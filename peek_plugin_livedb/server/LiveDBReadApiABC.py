@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from abc import ABCMeta, abstractmethod
 from rx.subjects import Subject
 from twisted.internet.defer import Deferred
@@ -47,11 +49,18 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def bulkLoadDeferredGenerator(self, modelSetName: str) -> Deferred:
+    def bulkLoadDeferredGenerator(self, modelSetName: str,
+                                  keyList: Optional[List[str]] = None) -> Deferred:
         """ Live DB Tuples
 
         Return a generator that returns deferreds that are fired with chunks of the
          entire live db.
+
+        :param modelSetName:  The name of the model set for the live db
+        :param keyList:  An optional list of keys that the data is required for
+
+        :return: A deferred that fires with a list of tuples
+        :rtype: C{LiveDbDisplayValueTuple}
 
         This is served up in chunks to prevent ballooning the memory usage.
 
@@ -64,7 +73,8 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
                     deferredGenerator = diagramLiveDbApi.bulkLoadDeferredGenerator("modelName")
 
                     while True:
-                        liveDbValueTuples :List[LiveDbValueTuple] = yield next(deferredGenerator)
+                        d = next(deferredGenerator)
+                        liveDbValueTuples = yield d # List[LiveDbDisplayValueTuple]
 
                         # The end of the list is marked my an empty result
                         if not liveDbValueTuples:
@@ -73,10 +83,6 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
                         # TODO, do something with this chunk of liveDbValueTuples
 
 
-        :param modelSetName:  The name of the model set for the live db
-
-        :return: A deferred that fires with a list of tuples
-        :rtype: C{LiveDbValueTuple}
 
         """
 

@@ -1,9 +1,8 @@
 import logging
-from typing import List
+from typing import List, Optional
 
 from collections import defaultdict
 from rx.subjects import Subject
-from twisted.internet import defer
 from twisted.internet.defer import Deferred
 
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
@@ -42,13 +41,13 @@ class LiveDBReadApi(LiveDBReadApiABC):
     def itemDeletionsObservable(self, modelSetName: str) -> Subject:
         return self._deletionsSubject[modelSetName]
 
-    def bulkLoadDeferredGenerator(self, modelSetName: str) -> Deferred:
+    def bulkLoadDeferredGenerator(self, modelSetName: str,
+                                  keyList: Optional[List[str]]=None) -> Deferred:
         offset = 0
         limit = 10000
         while True:
             yield qryChunk(offset, limit, self._dbSessionCreator)
             offset += limit
-
 
     def rawValueUpdatesObservable(self, modelSetName: str) -> Subject:
         return self._rawValueUpdatesSubject[modelSetName]

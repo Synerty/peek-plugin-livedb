@@ -1,13 +1,9 @@
 import logging
-import zlib
-from _collections import defaultdict
 from datetime import datetime
 from typing import List
 
 from collections import namedtuple
-from functools import cmp_to_key
-from sqlalchemy.sql.expression import cast, select
-from sqlalchemy.sql.sqltypes import String
+from sqlalchemy.sql.expression import select
 from txcelery.defer import CeleryClient
 
 from peek_plugin_base.worker import CeleryDbConn
@@ -22,88 +18,73 @@ logger = logging.getLogger(__name__)
 DispData = namedtuple('DispData', ['json', 'id', 'levelOrder', 'layerOrder'])
 
 
-class LiveDbItemImportTask:
-    """ Live DB Item Import Task
+def _importLiveDbItems(modelSetName: str,
+                       newItems: List[ImportLiveDbItemTuple]) -> List[str]:
+    startTime = datetime.utcnow()
 
-    Compile the disp items into the grid data
+    session = CeleryDbConn.getDbSession()
+    conn = CeleryDbConn.getDbEngine().connect()
+    transaction = conn.begin()
 
-    1) Query for existing items
-    2) Insert new items
-    2) Return a list of keys that were inserted
-    """
+    liveDbTable = LiveDbItem.__table__
+    try:
 
-    def import_(self, modelSetName: str,
-                    newItems: List[ImportLiveDbItemTuple]) -> List[str]:
+        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
 
-        startTime = datetime.utcnow()
+        # This will remove duplicates
+        itemsByKey = {i.key: i for i in newItems}
 
-        session = CeleryDbConn.getDbSession()
-        conn = CeleryDbConn.getDbEngine().connect()
-        transaction = conn.begin()
+        allKeys = list(itemsByKey)
+        existingKeys = set()
 
-        liveDbTable = LiveDbItem.__table__
-        try:
+        # Query for existing keys, in 1000 chinks
+        chunkSize = 1000
+        offset = 0
+        while True:
+            chunk = allKeys[offset:chunkSize]
+            if not chunk:
+                break
+            offset += chunkSize
+            result = conn.execute(select([liveDbTable.c.key])
+                                  .where(liveDbTable.c.key.in_(chunk)))
+            existingKeys.update([o[0] for o in result.fetchall()])
 
-            liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
+        inserts = []
+        newKeys = []
 
-            # This will remove duplicates
-            itemsByKey = {i.key: i for i in newItems}
+        for newItem in itemsByKey.values():
+            if newItem.key in existingKeys:
+                continue
 
-            allKeys = list(itemsByKey)
-            existingKeys = set()
+            inserts.append(dict(
+                modelSetId=liveDbModelSet.id,
+                key=newItem.key,
+                dataType=newItem.dataType,
+                rawValue=newItem.rawValue,
+                displayValue=newItem.displayValue,
+                importHash=newItem.importHash
+            ))
 
-            # Query for existing keys, in 1000 chinks
-            chunkSize = 1000
-            offset = 0
-            while True:
-                chunk = allKeys[offset:chunkSize]
-                if not chunk:
-                    break
-                offset += chunkSize
-                existingKeys.update(conn.execute(select(liveDbTable.c.key)
-                                                 .yield_per(chunk)
-                                                 .where(liveDbTable.c.key.in_(chunk))
-                                                 .as_scalar()))
+            newKeys.append(newItem.key)
 
-            inserts = []
-            newKeys = []
+        if not inserts:
+            return []
 
-            for newItem in itemsByKey.values():
-                if newItem.key in existingKeys:
-                    continue
+        conn.execute(LiveDbItem.__table__.insert(), inserts)
 
-                inserts.append(dict(
-                    modelSetId=liveDbModelSet.id,
-                    key=newItem.key,
-                    dataType=newItem.dataType,
-                    rawValue=newItem.rawValue,
-                    displayValue=newItem.displayValue,
-                    importHash=newItem.importHash
-                ))
+        transaction.commit()
+        logger.debug("Inserted %s LiveDbItems, %s already existed, in %s",
+                     len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
 
-                newKeys.append(newItem.key)
+        return newKeys
 
-            if not inserts:
-                return []
+    except Exception as e:
+        transaction.rollback()
+        logger.critical(e)
 
-            conn.execute(LiveDbItem.__table__.insert(), inserts)
-
-            transaction.commit()
-            logger.debug("Inserted %s LiveDbItems, %s already existed, in %s",
-                         len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
-
-            return newKeys
-
-        except Exception as e:
-            transaction.rollback()
-            logger.critical(e)
-
-        finally:
-            conn.close()
-            session.close()
-
-
-liveDbItemImportTask = LiveDbItemImportTask()
+    finally:
+        conn.close()
+        session.close()
 
 
 @CeleryClient
@@ -119,6 +100,6 @@ def importLiveDbItems(self, modelSetName: str, newItemsPayloadJson: str) -> List
     newItems: List[ImportLiveDbItemTuple] = Payload()._fromJson(
         newItemsPayloadJson).tuples
     try:
-        return liveDbItemImportTask.import_(modelSetName, newItems)
+        return _importLiveDbItems(modelSetName, newItems)
     except Exception as e:
         raise self.retry(exc=e, countdown=10)

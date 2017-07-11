@@ -1,8 +1,7 @@
 import logging
 
 from peek_plugin_base.worker.PluginWorkerEntryHookABC import PluginWorkerEntryHookABC
-from peek_plugin_livedb._private.worker.tasks.LiveDbItemImportTask import \
-    LiveDbItemImportTask
+from peek_plugin_livedb._private.worker.tasks import LiveDbItemImportTask
 from peek_plugin_livedb.tuples import loadPublicTuples
 
 logger = logging.getLogger(__name__)

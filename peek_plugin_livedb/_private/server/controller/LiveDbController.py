@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from peek_plugin_livedb._private.storage.LiveDbTuple import LiveDbTuple
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 logger = logging.getLogger(__name__)
@@ -67,13 +67,13 @@ class LiveDbController(object):
 
         ormSession = self._dbSessionCreator()
         try:
-            qry = (ormSession.query(LiveDbTuple)
-                   .order_by(LiveDbTuple.id)
+            qry = (ormSession.query(LiveDbItem)
+                   .order_by(LiveDbItem.id)
                    .yield_per(self.AGENT_KEY_SEND_CHUNK))
 
             # you can't have filter limit/offset at the same time
             if keyIds is not None:
-                qry = qry.filter(LiveDbTuple.id.in_(keyIds))
+                qry = qry.filter(LiveDbItem.id.in_(keyIds))
 
             self._status.downloadStatus = "Sending chunk %s to %s" % (
                 offset, self.AGENT_KEY_SEND_CHUNK + offset)

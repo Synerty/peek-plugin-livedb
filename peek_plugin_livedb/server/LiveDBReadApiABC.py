@@ -5,22 +5,23 @@ from twisted.internet.defer import Deferred
 
 class LiveDBReadApiABC(metaclass=ABCMeta):
     @abstractmethod
-    def monitorLiveDbIdsObservable(self, modelSetName: str) -> Subject:
-        """ Monitor Live DB ID Observable
+    def priorityLiveDbKeysObservable(self, modelSetName: str) -> Subject:
+        """ Priority Live DB ID Observable
 
-       This observable emits list of IDs that the live db acquisition plugins should
-       prioritise.
+        This observable emits list of keys that the live db acquisition plugins should
+        prioritise.
 
-       This list will represent the IDs of the object that are currently being viewed.
+        This list will represent keys relating to the objects that are
+        currently being viewed.
 
         :param modelSetName:  The name of the model set to import the disps into
 
-        :return: An observable that emits a list of integers.
+        :return: An observable that emits a List[str].
 
         """
 
     @abstractmethod
-    def liveDbTupleAdditionsObservable(self, modelSetName: str) -> Deferred:
+    def itemAdditionsObservable(self, modelSetName: str) -> Subject:
         """ Live DB Tuple Added Items Observable
 
         Return an observable that fires when livedb items are added
@@ -28,12 +29,12 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         :param modelSetName: The name of the model set for the live db
 
         :return: An observable that fires when keys are removed from the live db
-        :rtype: C{LiveDbValueTuple}
+        :rtype: An observable that emits List[LiveDbDisplayValueTuple]
 
         """
 
     @abstractmethod
-    def liveDbTupleRemovalsObservable(self, modelSetName: str) -> Deferred:
+    def itemDeletionsObservable(self, modelSetName: str) -> Subject:
         """ Live DB Tuple Removed Items Observable
 
         Return an observable that fires when livedb items are removed
@@ -41,12 +42,12 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         :param modelSetName:  The name of the model set for the live db
 
         :return: An observable that fires when keys are removed from the live db
-        :rtype: C{LiveDbValueTuple}
+        :rtype: An observable that emits List[str]
 
         """
 
     @abstractmethod
-    def liveDbTuplesDeferredGenerator(self, modelSetName: str) -> Deferred:
+    def bulkLoadDeferredGenerator(self, modelSetName: str) -> Deferred:
         """ Live DB Tuples
 
         Return a generator that returns deferreds that are fired with chunks of the
@@ -60,10 +61,10 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
 
                 @inlineCallbacks
                 def loadFromDiagramApi(diagramLiveDbApi:DiagramLiveDbApiABC):
-                    deferredGenerator = diagramLiveDbApi.liveDbTuplesDefferedGenerator("modelName")
+                    deferredGenerator = diagramLiveDbApi.bulkLoadDeferredGenerator("modelName")
 
                     while True:
-                        liveDbValueTuples :List[LiveDbValueTuple] = yield deferredGenerator()
+                        liveDbValueTuples :List[LiveDbValueTuple] = yield next(deferredGenerator)
 
                         # The end of the list is marked my an empty result
                         if not liveDbValueTuples:
@@ -80,15 +81,29 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def liveDbValueUpdatesObservable(self, modelSetName: str) -> Subject:
-        """ Live DB Value Update Observable
+    def rawValueUpdatesObservable(self, modelSetName: str) -> Subject:
+        """ Raw Value Update Observable
 
-        Return an observable that fires with lists of C{LiveDbValueTuple} tuples
+        Return an observable that fires with lists of C{LiveDbRawValueTuple} tuples
         containing updates to live db values.
 
         :param modelSetName:  The name of the model set for the live db
 
         :return: An observable that fires when values are updated in the livedb
-        :rtype: C{LiveDbValueTuple}
+        :rtype: Subject[List[LiveDbRawValueTuple]]
+
+        """
+
+    @abstractmethod
+    def displayValueUpdatesObservable(self, modelSetName: str) -> Subject:
+        """ Display Value Update Observable
+
+        Return an observable that fires with lists of C{LiveDbDisplayValueTuple} tuples
+        containing updates to live db values.
+
+        :param modelSetName:  The name of the model set for the live db
+
+        :return: An observable that fires when values are updated in the livedb
+        :rtype: An observable that fires with List[LiveDbDisplayValueTuple]
 
         """

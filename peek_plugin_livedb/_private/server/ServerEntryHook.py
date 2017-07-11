@@ -95,14 +95,18 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
         liveDbController = LiveDbController(self.dbSessionCreator)
         self._loadedObjects.append(liveDbController)
 
-        liveDbImportController = LiveDbImportController(self.dbSessionCreator,
-                                                        self.getPgSequenceGenerator)
+        liveDbImportController = LiveDbImportController(self.dbSessionCreator)
         self._loadedObjects.append(liveDbImportController)
 
         # Initialise the API object that will be shared with other plugins
         self._api = LiveDBApi(liveDbController=liveDbController,
-                              liveDbImportController=liveDbImportController)
+                              liveDbImportController=liveDbImportController,
+                              dbSessionCreator=self.dbSessionCreator,
+                              dbEngine=self.dbEngine)
         self._loadedObjects.append(self._api)
+
+        # noinspection PyTypeChecker
+        liveDbImportController.setReadApi(self._api.readApi)
 
         logger.debug("Started")
 

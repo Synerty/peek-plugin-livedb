@@ -4,14 +4,15 @@ from abc import ABCMeta, abstractmethod
 from twisted.internet.defer import Deferred
 
 from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
-from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
-from peek_plugin_livedb.tuples.LiveDbRawValueTuple import LiveDbRawValueTuple
+from peek_plugin_livedb.tuples.LiveDbDisplayValueUpdateTuple import \
+    LiveDbDisplayValueUpdateTuple
+from peek_plugin_livedb.tuples.LiveDbRawValueUpdateTuple import LiveDbRawValueUpdateTuple
 
 
 class LiveDBWriteApiABC(metaclass=ABCMeta):
     @abstractmethod
-    def processLiveDbRawValueUpdates(self, modelSetName: str,
-                                     updates: LiveDbRawValueTuple) -> Deferred:
+    def updateRawValues(self, modelSetName: str,
+                        updates: List[LiveDbRawValueUpdateTuple]) -> Deferred:
         """ Process Live DB Raw Value Updates
 
         Tells the live db that values have updated in the field, or wherever.
@@ -25,8 +26,8 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def processLiveDbDisplayValueUpdates(self, modelSetName: str,
-                                         updates: LiveDbDisplayValueTuple) -> Deferred:
+    def updateDisplayValue(self, modelSetName: str,
+                           updates: List[LiveDbDisplayValueUpdateTuple]) -> Deferred:
         """ Process Live DB Raw+Display Value Updates
 
         Tells the live db that values have updated in the field, or wherever.
@@ -41,7 +42,7 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
 
     @abstractmethod
     def importLiveDbItems(self, modelSetName: str,
-                                 newItems: ImportLiveDbItemTuple) -> Deferred:
+                          newItems: List[ImportLiveDbItemTuple]) -> Deferred:
         """ Import LiveDB Items
 
         Create new Live DB Items with Raw + Display values

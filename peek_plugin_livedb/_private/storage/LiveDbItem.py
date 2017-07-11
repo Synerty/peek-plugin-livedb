@@ -11,13 +11,13 @@ from sqlalchemy.sql.schema import Index, Sequence
 from vortex.Tuple import Tuple, addTupleType, JSON_EXCLUDE
 
 from .DeclarativeBase import DeclarativeBase
-from .ModelSet import ModelSet
+from .LiveDbModelSet import LiveDbModelSet
 
 logger = logging.getLogger(__name__)
 
 
 @addTupleType
-class LiveDbTuple(Tuple, DeclarativeBase):
+class LiveDbItem(Tuple, DeclarativeBase):
     __tupleTypeShort__ = 'LDK'
     __tablename__ = 'LiveDbItem'
     __tupleType__ = livedbTuplePrefix + __tablename__
@@ -35,9 +35,9 @@ class LiveDbTuple(Tuple, DeclarativeBase):
     id = Column(Integer, id_seq, server_default=id_seq.next_value(),
                 primary_key=True, autoincrement=True, doc="id")
 
-    modelSetId = Column(Integer, ForeignKey('ModelSet.id', ondelete='CASCADE'),
+    modelSetId = Column(Integer, ForeignKey('LiveDbModelSet.id', ondelete='CASCADE'),
                         doc=JSON_EXCLUDE, nullable=False)
-    modelSet = relationship(ModelSet)
+    modelSet = relationship(LiveDbModelSet)
 
     # comment="The unique reference of the value we want from the live db"
     key = Column(String, nullable=False)

@@ -1,6 +1,6 @@
 from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
 
-from peek_plugin_livedb._private.storage.LiveDbTuple import LiveDbTuple
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from vortex.Tuple import Tuple, addTupleType
 
 @addTupleType
@@ -13,16 +13,9 @@ class LiveDbDisplayValueTuple(Tuple):
     __tupleType__ = livedbTuplePrefix + 'LiveDbDisplayValueTuple'
     __slots__ = ("key", "dataType", "rawValue", "displayValue")
 
-    DATA_TYPE_NUMBER_VALUE = LiveDbTuple.NUMBER_VALUE
-    DATA_TYPE_STRING_VALUE = LiveDbTuple.STRING_VALUE
-    DATA_TYPE_COLOR = LiveDbTuple.COLOR
-    DATA_TYPE_LINE_WIDTH = LiveDbTuple.LINE_WIDTH
-    DATA_TYPE_LINE_STYLE = LiveDbTuple.LINE_STYLE
-    DATA_TYPE_GROUP_PTR = LiveDbTuple.GROUP_PTR
-
-    def __init__(self, key=None, dataType=None, rawValue=None, displayValue=None):
-        # DON'T CALL SUPER INIT
-        self.key = key
-        self.dataType = dataType
-        self.rawValue = rawValue
-        self.displayValue = displayValue
+    DATA_TYPE_NUMBER_VALUE = LiveDbItem.NUMBER_VALUE
+    DATA_TYPE_STRING_VALUE = LiveDbItem.STRING_VALUE
+    DATA_TYPE_COLOR = LiveDbItem.COLOR
+    DATA_TYPE_LINE_WIDTH = LiveDbItem.LINE_WIDTH
+    DATA_TYPE_LINE_STYLE = LiveDbItem.LINE_STYLE
+    DATA_TYPE_GROUP_PTR = LiveDbItem.GROUP_PTR

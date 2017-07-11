@@ -8,8 +8,8 @@ from .DeclarativeBase import DeclarativeBase
 
 
 @addTupleType
-class ModelSet(Tuple, DeclarativeBase):
-    __tablename__ = 'ModelSet'
+class LiveDbModelSet(Tuple, DeclarativeBase):
+    __tablename__ = 'LiveDbModelSet'
     __tupleType__ = livedbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -19,10 +19,10 @@ class ModelSet(Tuple, DeclarativeBase):
     data = TupleField()
 
 
-def getOrCreateModelSet(session, modelSetName):
-    qry = session.query(ModelSet).filter(ModelSet.name == modelSetName)
+def getOrCreateLiveDbModelSet(session, modelSetName:str) -> LiveDbModelSet:
+    qry = session.query(LiveDbModelSet).filter(LiveDbModelSet.name == modelSetName)
     if not qry.count():
-        session.add(ModelSet(name=modelSetName))
+        session.add(LiveDbModelSet(name=modelSetName))
         session.commit()
 
     return qry.one()

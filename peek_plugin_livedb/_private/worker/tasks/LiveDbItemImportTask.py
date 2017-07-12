@@ -15,8 +15,6 @@ from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
-DispData = namedtuple('DispData', ['json', 'id', 'levelOrder', 'layerOrder'])
-
 
 def _importLiveDbItems(modelSetName: str,
                        newItems: List[ImportLiveDbItemTuple]) -> List[str]:

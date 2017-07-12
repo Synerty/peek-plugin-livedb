@@ -3,6 +3,7 @@ from typing import List, Optional
 
 from collections import defaultdict
 from rx.subjects import Subject
+from sqlalchemy import select
 from twisted.internet.defer import Deferred
 
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
@@ -42,9 +43,9 @@ class LiveDBReadApi(LiveDBReadApiABC):
         return self._deletionsSubject[modelSetName]
 
     def bulkLoadDeferredGenerator(self, modelSetName: str,
-                                  keyList: Optional[List[str]]=None) -> Deferred:
+                                  keyList: Optional[List[str]] = None) -> Deferred:
         offset = 0
-        limit = 10000
+        limit = 2500
         while True:
             yield qryChunk(offset, limit, self._dbSessionCreator)
             offset += limit
@@ -58,17 +59,20 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 @deferToThreadWrapWithLogger(logger)
 def qryChunk(offset, limit, dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
+    table = LiveDbItem.__table__
+    cols = [table.c.key, table.c.dataType, table.c.rawValue, table.c.displayValue]
+
     session = dbSessionCreator()
     try:
-        qry = (session.query(LiveDbItem)
-               .order_by(LiveDbItem.id)
-               .offset(offset)
-               .limit(limit)
-               .yield_per(10000))
+        result = session.execute(select(cols)
+                                 .order_by(table.c.id)
+                                 .offset(offset)
+                                 .limit(limit))
 
         return [LiveDbDisplayValueTuple(
             key=o.key, dataType=o.dataType,
-            rawValue=o.rawValue, displayValue=o.displayValue) for o in qry]
+            rawValue=o.rawValue, displayValue=o.displayValue) for o in result.fetchall()]
+
 
     finally:
         session.close()

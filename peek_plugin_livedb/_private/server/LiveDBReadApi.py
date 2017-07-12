@@ -47,7 +47,7 @@ class LiveDBReadApi(LiveDBReadApiABC):
         offset = 0
         limit = 2500
         while True:
-            yield qryChunk(offset, limit, self._dbSessionCreator)
+            yield qryChunk(offset, limit, keyList, self._dbSessionCreator)
             offset += limit
 
     def rawValueUpdatesObservable(self, modelSetName: str) -> Subject:
@@ -58,16 +58,20 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 
 @deferToThreadWrapWithLogger(logger)
-def qryChunk(offset, limit, dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
+def qryChunk(offset, limit, keyList, dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
     table = LiveDbItem.__table__
     cols = [table.c.key, table.c.dataType, table.c.rawValue, table.c.displayValue]
 
     session = dbSessionCreator()
     try:
-        result = session.execute(select(cols)
-                                 .order_by(table.c.id)
-                                 .offset(offset)
-                                 .limit(limit))
+        stmt = select(cols).order_by(table.c.id)
+
+        if keyList:
+            stmt = stmt.where(table.c.key.in_(keyList))
+
+        stmt = stmt.offset(offset).limit(limit)
+
+        result = session.execute(stmt)
 
         return [LiveDbDisplayValueTuple(
             key=o.key, dataType=o.dataType,

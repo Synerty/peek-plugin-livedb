@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import Column
+from sqlalchemy import Column, text
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
@@ -31,7 +31,7 @@ class LiveDbItem(Tuple, DeclarativeBase):
                       metadata=DeclarativeBase.metadata,
                       schema=DeclarativeBase.metadata.schema)
     id = Column(Integer, id_seq, server_default=id_seq.next_value(),
-                primary_key=True, autoincrement=True, doc="id")
+                primary_key=True, autoincrement=False)
 
     modelSetId = Column(Integer, ForeignKey('LiveDbModelSet.id', ondelete='CASCADE'),
                         doc=JSON_EXCLUDE, nullable=False)

@@ -1,9 +1,10 @@
-from typing import List
+from typing import List, Dict
 
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import LiveDbModelSet
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 from peek_plugin_livedb.tuples.LiveDbRawValueTuple import LiveDbRawValueTuple
+from sqlalchemy import select
 
 
 class WorkerApi:
@@ -54,3 +55,34 @@ class WorkerApi:
             )
 
         return results
+
+    @classmethod
+    def getLiveDbKeyDatatypeDict(cls, ormSession,
+                                 modelSetName: str,
+                                 liveDbKeys: List[str]) -> Dict[str, int]:
+        """ Get Live DB Display Values
+
+        Return an array of items representing the display values from the LiveDB.
+
+        :param ormSession: The SQLAlchemy orm session from the calling code.
+        :param modelSetName: The name of the model set to get the keys for
+        :param liveDbKeys: An array of LiveDb Keys.
+
+        :returns: An array of tuples.
+        """
+        liveDbTable = LiveDbItem.__table__
+        modelTable = LiveDbModelSet.__table__
+
+        if not liveDbKeys:
+            return {}
+
+        liveDbKeys = set(liveDbKeys)  # Remove duplicates if any exist.
+        resultSet = ormSession.execute(
+            select([liveDbTable.c.key, liveDbTable.c.dataType])
+                .select_from(liveDbTable
+                             .join(modelTable,
+                                   liveDbTable.c.modelSetId == modelTable.c.id))
+                .where(liveDbTable.c.key.in_(liveDbKeys))
+                .where(modelTable.c.name == modelSetName)
+        )
+        return dict(resultSet.fetchall())

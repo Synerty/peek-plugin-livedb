@@ -1,15 +1,13 @@
 import logging
 
-from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer, String
-from sqlalchemy.dialects.postgresql.json import JSONB
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm.mapper import reconstructor
 from sqlalchemy.sql.schema import Index, Sequence
-from vortex.Tuple import Tuple, addTupleType, JSON_EXCLUDE
 
+from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
+from vortex.Tuple import Tuple, addTupleType, JSON_EXCLUDE
 from .DeclarativeBase import DeclarativeBase
 from .LiveDbModelSet import LiveDbModelSet
 
@@ -40,29 +38,24 @@ class LiveDbItem(Tuple, DeclarativeBase):
     modelSet = relationship(LiveDbModelSet)
 
     # comment="The unique reference of the value we want from the live db"
-    key = Column(String, nullable=False)
+    key = Column(String(50), nullable=False)
 
     # comment="The last value from the source"
-    rawValue = Column(String, doc="v")
+    rawValue = Column(String(255))
 
     # comment="The PEEK value, converted to PEEK IDs if required (Color for example)"
-    displayValue = Column(String, doc=JSON_EXCLUDE)
+    displayValue = Column(String(255))
 
     # comment="The type of data this value represents"
-    dataType = Column(Integer, doc="dt")
+    dataType = Column(Integer, nullable=False)
+
+    importHash = Column(String(100))
 
     # Store custom props for this link
-    props = Column(JSONB, doc=JSON_EXCLUDE)
-
-    importHash = Column(String, doc=JSON_EXCLUDE)
+    propsJson = Column(String(500))
 
     __table_args__ = (
         Index("idx_LiveDbDKey_importHash", importHash, unique=False),
         Index("idx_LiveDbDKey_modelSetId", modelSetId, unique=False),
         Index("idx_LiveDbDKey_liveDbKey", key, unique=False),
     )
-
-    @reconstructor
-    def __init__(self, **kwargs):
-        Tuple.__init__(self, **kwargs)
-        self.props = {}

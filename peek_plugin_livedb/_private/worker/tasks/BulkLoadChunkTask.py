@@ -1,21 +1,20 @@
 import logging
-from datetime import datetime
+from typing import List
 
 from sqlalchemy import select
-from txcelery.defer import CeleryClient
+from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.worker.CeleryApp import celeryApp
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
-from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
 
-@CeleryClient
+@DeferrableTask
 @celeryApp.task(bind=True)
-def qryChunkInWorker(self, offset, limit) -> str:
+def qryChunkInWorker(self, offset, limit) -> List[LiveDbDisplayValueTuple]:
     """ Query Chunk
 
     This returns a chunk of LiveDB items from the database
@@ -36,11 +35,9 @@ def qryChunkInWorker(self, offset, limit) -> str:
                                  .offset(offset)
                                  .limit(limit))
 
-        tuples = [LiveDbDisplayValueTuple(
+        return [LiveDbDisplayValueTuple(
             key=o.key, dataType=o.dataType,
             rawValue=o.rawValue, displayValue=o.displayValue) for o in result.fetchall()]
-
-        return Payload(tuples=tuples)._toJson()
 
     finally:
         session.close()

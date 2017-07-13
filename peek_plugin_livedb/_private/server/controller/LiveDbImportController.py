@@ -42,7 +42,21 @@ class LiveDbImportController:
 
         newKeys = yield importLiveDbItems.delay(
             modelSetName=modelSetName,
-            newItemsPayloadJson=Payload(tuples=newItems)._toJson())
+            newItems=newItems
+        )
+
+        newTuples = []
+
+        deferredGenerator = self._readApi.bulkLoadDeferredGenerator(
+            modelSetName, keyList=newKeys)
+        while True:
+            d = next(deferredGenerator)
+            newTuplesChunk = yield d  # List[LiveDbDisplayValueTuple]
+            newTuples += newTuplesChunk
+
+            # The end of the list is marked my an empty result
+            if not newTuplesChunk:
+                break
 
         # Notify the agent of the new keys.
-        self._readApi.itemAdditionsObservable(modelSetName).on_next(newKeys)
+        self._readApi.itemAdditionsObservable(modelSetName).on_next(newTuples)

@@ -58,7 +58,13 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 
 @deferToThreadWrapWithLogger(logger)
-def qryChunk(offset, limit, keyList, dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
+def qryChunk(offset: int, limit: int, keyList: List[str],
+             dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
+
+    # If they've given us an empty key list, that is what they will get back
+    if keyList is not None and not keyList:
+        return []
+
     table = LiveDbItem.__table__
     cols = [table.c.key, table.c.dataType, table.c.rawValue, table.c.displayValue]
 
@@ -66,7 +72,7 @@ def qryChunk(offset, limit, keyList, dbSessionCreator) -> List[LiveDbDisplayValu
     try:
         stmt = select(cols).order_by(table.c.id)
 
-        if keyList:
+        if keyList is not None:
             stmt = stmt.where(table.c.key.in_(keyList))
 
         stmt = stmt.offset(offset).limit(limit)

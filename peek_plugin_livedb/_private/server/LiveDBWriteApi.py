@@ -48,8 +48,7 @@ class LiveDBWriteApi(LiveDBWriteApiABC):
 
         """
 
-        updatesPayload = Payload(tuples=updates)._toJson()
-        yield updateValues.delay(modelSetName, updatesPayload, raw=True)
+        yield updateValues.delay(modelSetName, updates, raw=True)
         self._readApi.rawValueUpdatesObservable(modelSetName).on_next(updates)
 
     @inlineCallbacks
@@ -58,8 +57,7 @@ class LiveDBWriteApi(LiveDBWriteApiABC):
         """ Update Display Values
 
         """
-        updatesPayload = Payload(tuples=updates)._toJson()
-        yield updateValues.delay(modelSetName, updatesPayload, raw=False)
+        yield updateValues.delay(modelSetName, updates, raw=False)
         self._readApi.displayValueUpdatesObservable(modelSetName).on_next(updates)
 
     def importLiveDbItems(self, modelSetName: str,

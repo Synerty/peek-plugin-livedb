@@ -2,22 +2,30 @@ import logging
 from datetime import datetime
 from typing import List
 
-from collections import namedtuple
 from sqlalchemy.sql.expression import select
-from txcelery.defer import CeleryClient
+from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb._private.worker.CeleryApp import celeryApp
 from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
-from vortex.Payload import Payload
 
 logger = logging.getLogger(__name__)
 
 
-def _importLiveDbItems(modelSetName: str,
-                       newItems: List[ImportLiveDbItemTuple]) -> List[str]:
+@DeferrableTask
+@celeryApp.task(bind=True)
+def importLiveDbItems(self, modelSetName: str,
+                      newItems: List[ImportLiveDbItemTuple]) -> List[str]:
+    """ Compile Grids Task
+
+    :param self: A celery reference to this task
+    :param modelSetName: The model set name
+    :param newItems: The list of new items
+    :returns: A list of grid keys that have been updated.
+    """
+
     startTime = datetime.utcnow()
 
     session = CeleryDbConn.getDbSession()
@@ -78,26 +86,9 @@ def _importLiveDbItems(modelSetName: str,
 
     except Exception as e:
         transaction.rollback()
-        logger.critical(e)
+        logger.exception(e)
+        raise self.retry(exc=e, countdown=10)
 
     finally:
         conn.close()
         session.close()
-
-
-@CeleryClient
-@celeryApp.task(bind=True)
-def importLiveDbItems(self, modelSetName: str, newItemsPayloadJson: str) -> List[str]:
-    """ Compile Grids Task
-
-    :param self: A celery reference to this task
-    :param modelSetName: The model set name
-    :param newItemsPayloadJson: An encoded payload containing the new LiveDb items.
-    :returns: A list of grid keys that have been updated.
-    """
-    newItems: List[ImportLiveDbItemTuple] = Payload()._fromJson(
-        newItemsPayloadJson).tuples
-    try:
-        return _importLiveDbItems(modelSetName, newItems)
-    except Exception as e:
-        raise self.retry(exc=e, countdown=10)

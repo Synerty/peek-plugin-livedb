@@ -16,16 +16,15 @@ logger = logging.getLogger(__name__)
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def updateValues(self, modelSetName, updatesPayload, raw=True):
+def updateValues(self, modelSetName, updates, raw=True):
     """ Compile Grids Task
 
     :param self: A celery reference to this task
     :param modelSetName: The model set name
-    :param updatesPayload: An encoded payload containing the updates
+    :param updates: An encoded payload containing the updates
     :param raw: Are the updates raw updates?
     :returns: A list of grid keys that have been updated.
     """
-    updates = Payload()._fromJson(updatesPayload).tuples
 
     startTime = datetime.utcnow()
     table = LiveDbItem.__table__

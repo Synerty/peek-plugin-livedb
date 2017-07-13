@@ -15,14 +15,25 @@ branch_labels = None
 depends_on = None
 
 
+from sqlalchemy.dialects.mssql.base import MSDialect
+from sqlalchemy.dialects.postgresql.base import PGDialect
 from sqlalchemy.schema import Sequence, CreateSequence
 from alembic import op
 import sqlalchemy as sa
 import geoalchemy2
 
 
+def isMssqlDialect():
+    return isinstance(op.get_bind().engine.dialect, MSDialect)
+
+def isPostGreSQLDialect():
+    return isinstance(op.get_bind().engine.dialect, PGDialect)
+
 def nextval(seqName):
-    return sa.text('(NEXT VALUE FOR "pl_livedb"."%s")' % seqName)
+    if isMssqlDialect():
+        return sa.text('(NEXT VALUE FOR "pl_livedb"."%s")' % seqName)
+
+    return sa.text('nextval(\'pl_livedb."%s"\')' % seqName)
 
 def upgrade():
     op.execute(CreateSequence(Sequence('LiveDbItem_id_seq',  minvalue=0, schema='pl_livedb')))

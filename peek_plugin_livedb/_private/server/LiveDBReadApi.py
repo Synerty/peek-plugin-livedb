@@ -9,6 +9,7 @@ from twisted.internet.defer import Deferred
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
     LiveDbController
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
+from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb.server.LiveDBReadApiABC import LiveDBReadApiABC
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 from vortex.DeferUtil import deferToThreadWrapWithLogger
@@ -47,7 +48,7 @@ class LiveDBReadApi(LiveDBReadApiABC):
         offset = 0
         limit = 2500
         while True:
-            yield qryChunk(offset, limit, keyList, self._dbSessionCreator)
+            yield qryChunk(modelSetName, offset, limit, keyList, self._dbSessionCreator)
             offset += limit
 
     def rawValueUpdatesObservable(self, modelSetName: str) -> Subject:
@@ -58,9 +59,8 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 
 @deferToThreadWrapWithLogger(logger)
-def qryChunk(offset: int, limit: int, keyList: List[str],
+def qryChunk(modelSetName: str, offset: int, limit: int, keyList: List[str],
              dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
-
     # If they've given us an empty key list, that is what they will get back
     if keyList is not None and not keyList:
         return []
@@ -70,7 +70,11 @@ def qryChunk(offset: int, limit: int, keyList: List[str],
 
     session = dbSessionCreator()
     try:
-        stmt = select(cols).order_by(table.c.id)
+        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
+
+        stmt = (select(cols)
+                .order_by(table.c.id)
+                .where(table.c.modelSetId == liveDbModelSet.id))
 
         if keyList is not None:
             stmt = stmt.where(table.c.key.in_(keyList))

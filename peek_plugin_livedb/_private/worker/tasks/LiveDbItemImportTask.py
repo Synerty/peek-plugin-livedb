@@ -47,12 +47,13 @@ def importLiveDbItems(self, modelSetName: str,
         chunkSize = 1000
         offset = 0
         while True:
-            chunk = allKeys[offset:chunkSize]
+            chunk = allKeys[offset:offset + chunkSize]
             if not chunk:
                 break
             offset += chunkSize
             result = conn.execute(select([liveDbTable.c.key])
-                                  .where(liveDbTable.c.key.in_(chunk)))
+                                  .where(liveDbTable.c.key.in_(chunk))
+                                  .where(liveDbTable.c.modelSetId == liveDbModelSet.id))
             existingKeys.update([o[0] for o in result.fetchall()])
 
         inserts = []
@@ -79,7 +80,7 @@ def importLiveDbItems(self, modelSetName: str,
         conn.execute(LiveDbItem.__table__.insert(), inserts)
 
         transaction.commit()
-        logger.debug("Inserted %s LiveDbItems, %s already existed, in %s",
+        logger.info("Inserted %s LiveDbItems, %s already existed, in %s",
                      len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
 
         return newKeys

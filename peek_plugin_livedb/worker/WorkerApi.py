@@ -1,7 +1,8 @@
 from typing import List, Dict
 
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_livedb._private.storage.LiveDbModelSet import LiveDbModelSet
+from peek_plugin_livedb._private.storage.LiveDbModelSet import LiveDbModelSet, \
+    getOrCreateLiveDbModelSet
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 from peek_plugin_livedb.tuples.LiveDbRawValueTuple import LiveDbRawValueTuple
 from sqlalchemy import select
@@ -35,11 +36,12 @@ class WorkerApi:
         if not liveDbKeys:
             return []
 
+        liveDbModelSet = getOrCreateLiveDbModelSet(ormSession, modelSetName)
+
         liveDbKeys = set(liveDbKeys)  # Remove duplicates if any exist.
         qry = (
             ormSession.query(LiveDbItem)
-                .join(LiveDbModelSet, LiveDbModelSet.id == LiveDbItem.modelSetId)
-                .filter(LiveDbModelSet.name == modelSetName)
+                .filter(LiveDbItem.modelSetId == liveDbModelSet.id)
                 .filter(LiveDbItem.key.in_(liveDbKeys))
                 .yield_per(cls._FETCH_SIZE)
         )

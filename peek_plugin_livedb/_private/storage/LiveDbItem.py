@@ -56,6 +56,5 @@ class LiveDbItem(Tuple, DeclarativeBase):
 
     __table_args__ = (
         Index("idx_LiveDbDKey_importHash", importHash, unique=False),
-        Index("idx_LiveDbDKey_modelSetId", modelSetId, unique=False),
-        Index("idx_LiveDbDKey_liveDbKey", key, unique=False),
+        Index("idx_LiveDbDKey_modelSet_key", modelSetId, key, unique=True),
     )

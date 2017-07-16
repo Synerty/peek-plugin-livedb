@@ -29,13 +29,7 @@ def isPostGreSQLDialect():
 
 
 def upgrade():
-    msSql = '''SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE FUNCTION [pl_livedb].[csvKeysToTable](@input AS Varchar(max) )
+    msSql = '''CREATE FUNCTION [pl_livedb].[csvKeysToTable](@input AS Varchar(max) )
 RETURNS
       @Result TABLE(Value varchar(100))
 AS
@@ -57,8 +51,6 @@ BEGIN
       END
       RETURN
 END
-GO
-
 '''
 
     if isMssqlDialect():

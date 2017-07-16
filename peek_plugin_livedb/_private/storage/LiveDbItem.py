@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from sqlalchemy import Column, text
 from sqlalchemy import ForeignKey
@@ -6,6 +7,7 @@ from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index, Sequence
 
+from peek_plugin_base.storage.AlembicEnvBase import isPostGreSQLDialect, isMssqlDialect
 from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
 from vortex.Tuple import Tuple, addTupleType, JSON_EXCLUDE
 from .DeclarativeBase import DeclarativeBase
@@ -58,3 +60,32 @@ class LiveDbItem(Tuple, DeclarativeBase):
         Index("idx_LiveDbDKey_importHash", importHash, unique=False),
         Index("idx_LiveDbDKey_modelSet_key", modelSetId, key, unique=True),
     )
+
+
+def makeOrmKeysSubquery(ormSession, qry, keys: List[str], engine):
+    if isPostGreSQLDialect(engine):
+        return qry.filter(LiveDbItem.key.in_(keys))
+
+    if not isMssqlDialect(engine):
+        raise NotImplementedError()
+
+    sql = text("SELECT * FROM [pl_livedb].[csvKeysToTable]('%s')" % ','.join(keys))
+
+    sub_qry = ormSession.query(LiveDbItem.key)  # Not really
+    sub_qry = sub_qry.from_statement(sql)
+
+    return qry.filter(LiveDbItem.key.in_(sub_qry))
+
+
+def makeCoreKeysSubquery(stmt, keys: List[str], engine):
+    liveDbTable = LiveDbItem.__table__
+
+    if isPostGreSQLDialect(engine):
+        return stmt.where(liveDbTable.c.key.in_(keys))
+
+    if not isMssqlDialect(engine):
+        raise NotImplementedError()
+
+    sql = text("SELECT * FROM [pl_livedb].[csvKeysToTable]('%s')" % ','.join(keys))
+
+    return stmt.where(liveDbTable.c.key.in_(sql))

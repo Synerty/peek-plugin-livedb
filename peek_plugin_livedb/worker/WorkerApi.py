@@ -1,6 +1,8 @@
 from typing import List, Dict
 
-from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
+from peek_plugin_base.worker import CeleryDbConn
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem, \
+    makeOrmKeysSubquery, makeCoreKeysSubquery
 from peek_plugin_livedb._private.storage.LiveDbModelSet import LiveDbModelSet, \
     getOrCreateLiveDbModelSet
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
@@ -42,8 +44,11 @@ class WorkerApi:
         qry = (
             ormSession.query(LiveDbItem)
                 .filter(LiveDbItem.modelSetId == liveDbModelSet.id)
-                .filter(LiveDbItem.key.in_(liveDbKeys))
                 .yield_per(cls._FETCH_SIZE)
+        )
+
+        qry = makeOrmKeysSubquery(
+            ormSession, qry, list(liveDbKeys), CeleryDbConn.getDbEngine()
         )
 
         results = []
@@ -79,12 +84,13 @@ class WorkerApi:
             return {}
 
         liveDbKeys = set(liveDbKeys)  # Remove duplicates if any exist.
-        resultSet = ormSession.execute(
-            select([liveDbTable.c.key, liveDbTable.c.dataType])
+        stmt = (select([liveDbTable.c.key, liveDbTable.c.dataType])
                 .select_from(liveDbTable
                              .join(modelTable,
                                    liveDbTable.c.modelSetId == modelTable.c.id))
-                .where(liveDbTable.c.key.in_(liveDbKeys))
                 .where(modelTable.c.name == modelSetName)
         )
+        # noinspection PyTypeChecker
+        stmt = makeCoreKeysSubquery(stmt, liveDbKeys, ormSession.engine)
+        resultSet = ormSession.execute(stmt)
         return dict(resultSet.fetchall())

@@ -6,7 +6,8 @@ from sqlalchemy.sql.expression import select
 from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem, \
+    makeCoreKeysSubquery
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb._private.worker.CeleryApp import celeryApp
 from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
@@ -51,9 +52,12 @@ def importLiveDbItems(self, modelSetName: str,
             if not chunk:
                 break
             offset += chunkSize
-            result = conn.execute(select([liveDbTable.c.key])
-                                  .where(liveDbTable.c.key.in_(chunk))
+            stmt = (select([liveDbTable.c.key])
                                   .where(liveDbTable.c.modelSetId == liveDbModelSet.id))
+            stmt = makeCoreKeysSubquery(stmt, chunk, CeleryDbConn.getDbEngine())
+
+            result = conn.execute(stmt)
+
             existingKeys.update([o[0] for o in result.fetchall()])
 
         inserts = []

@@ -91,6 +91,6 @@ class WorkerApi:
                 .where(modelTable.c.name == modelSetName)
         )
         # noinspection PyTypeChecker
-        stmt = makeCoreKeysSubquery(stmt, liveDbKeys, ormSession.engine)
+        stmt = makeCoreKeysSubquery(stmt, liveDbKeys, ormSession.bind)
         resultSet = ormSession.execute(stmt)
         return dict(resultSet.fetchall())

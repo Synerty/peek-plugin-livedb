@@ -79,7 +79,7 @@ def qryChunk(modelSetName: str, offset: int, limit: int, keyList: List[str],
 
         if keyList is not None:
             # noinspection PyTypeChecker
-            stmt = makeCoreKeysSubquery(stmt, keyList, session.engine)
+            stmt = makeCoreKeysSubquery(stmt, keyList, session.bind)
 
         stmt = stmt.offset(offset).limit(limit)
 

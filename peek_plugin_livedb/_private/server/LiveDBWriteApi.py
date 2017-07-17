@@ -47,6 +47,8 @@ class LiveDBWriteApi(LiveDBWriteApiABC):
         """ Update Raw Values
 
         """
+        if not updates:
+            return
 
         yield updateValues.delay(modelSetName, updates, raw=True)
         self._readApi.rawValueUpdatesObservable(modelSetName).on_next(updates)
@@ -57,11 +59,17 @@ class LiveDBWriteApi(LiveDBWriteApiABC):
         """ Update Display Values
 
         """
+        if not updates:
+            return
+
         yield updateValues.delay(modelSetName, updates, raw=False)
         self._readApi.displayValueUpdatesObservable(modelSetName).on_next(updates)
 
     def importLiveDbItems(self, modelSetName: str,
                           newItems: List[ImportLiveDbItemTuple]) -> Deferred:
+        if not newItems:
+            return defer.succeed(True)
+
         return self._liveDbImportController.importLiveDbItems(modelSetName, newItems)
 
     def prioritiseLiveDbValueAcquisition(self, modelSetName: str,

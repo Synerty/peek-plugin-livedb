@@ -6,10 +6,10 @@ from rx.subjects import Subject
 from sqlalchemy import select
 from twisted.internet.defer import Deferred
 
+from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
     LiveDbController
-from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem, \
-    makeCoreKeysSubquery
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb.server.LiveDBReadApiABC import LiveDBReadApiABC
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
@@ -78,8 +78,9 @@ def qryChunk(modelSetName: str, offset: int, limit: int, keyList: List[str],
                 .where(table.c.modelSetId == liveDbModelSet.id))
 
         if keyList is not None:
-            # noinspection PyTypeChecker
-            stmt = makeCoreKeysSubquery(stmt, keyList, session.bind)
+            stmt = stmt.where(makeCoreValuesSubqueryCondition(
+                session.bind, table.c.key, keyList
+            ))
 
         stmt = stmt.offset(offset).limit(limit)
 

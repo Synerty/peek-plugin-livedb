@@ -1,13 +1,14 @@
 from typing import List, Dict
 
-from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem, \
-    makeOrmKeysSubquery, makeCoreKeysSubquery
+from sqlalchemy import select
+
+from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition, \
+    makeOrmValuesSubqueryCondition
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import LiveDbModelSet, \
     getOrCreateLiveDbModelSet
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 from peek_plugin_livedb.tuples.LiveDbRawValueTuple import LiveDbRawValueTuple
-from sqlalchemy import select
 
 
 class WorkerApi:
@@ -44,11 +45,10 @@ class WorkerApi:
         qry = (
             ormSession.query(LiveDbItem)
                 .filter(LiveDbItem.modelSetId == liveDbModelSet.id)
+                .filter(makeOrmValuesSubqueryCondition(
+                ormSession, LiveDbItem.key, list(liveDbKeys)
+            ))
                 .yield_per(cls._FETCH_SIZE)
-        )
-
-        qry = makeOrmKeysSubquery(
-            ormSession, qry, list(liveDbKeys), CeleryDbConn.getDbEngine()
         )
 
         results = []
@@ -83,14 +83,15 @@ class WorkerApi:
         if not liveDbKeys:
             return {}
 
-        liveDbKeys = set(liveDbKeys)  # Remove duplicates if any exist.
+        liveDbKeys = list(set(liveDbKeys))  # Remove duplicates if any exist.
         stmt = (select([liveDbTable.c.key, liveDbTable.c.dataType])
                 .select_from(liveDbTable
                              .join(modelTable,
                                    liveDbTable.c.modelSetId == modelTable.c.id))
                 .where(modelTable.c.name == modelSetName)
+                .where(makeCoreValuesSubqueryCondition(
+                    ormSession.bind, liveDbTable.c.key, liveDbKeys
+                ))
         )
-        # noinspection PyTypeChecker
-        stmt = makeCoreKeysSubquery(stmt, liveDbKeys, ormSession.bind)
         resultSet = ormSession.execute(stmt)
         return dict(resultSet.fetchall())

@@ -5,9 +5,9 @@ from typing import List
 from sqlalchemy.sql.expression import select
 from txcelery.defer import DeferrableTask
 
+from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem, \
-    makeCoreKeysSubquery
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb._private.worker.CeleryApp import celeryApp
 from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
@@ -30,7 +30,8 @@ def importLiveDbItems(self, modelSetName: str,
     startTime = datetime.utcnow()
 
     session = CeleryDbConn.getDbSession()
-    conn = CeleryDbConn.getDbEngine().connect()
+    engine = CeleryDbConn.getDbEngine()
+    conn = engine.connect()
     transaction = conn.begin()
 
     liveDbTable = LiveDbItem.__table__
@@ -53,8 +54,11 @@ def importLiveDbItems(self, modelSetName: str,
                 break
             offset += chunkSize
             stmt = (select([liveDbTable.c.key])
-                                  .where(liveDbTable.c.modelSetId == liveDbModelSet.id))
-            stmt = makeCoreKeysSubquery(stmt, chunk, CeleryDbConn.getDbEngine())
+                    .where(liveDbTable.c.modelSetId == liveDbModelSet.id)
+            .where(makeCoreValuesSubqueryCondition(
+                engine, liveDbTable.c.key, chunk
+            ))
+            )
 
             result = conn.execute(stmt)
 
@@ -85,7 +89,7 @@ def importLiveDbItems(self, modelSetName: str,
 
         transaction.commit()
         logger.info("Inserted %s LiveDbItems, %s already existed, in %s",
-                     len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
+                    len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
 
         return newKeys
 

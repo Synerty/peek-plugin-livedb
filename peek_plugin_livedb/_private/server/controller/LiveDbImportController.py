@@ -58,5 +58,9 @@ class LiveDbImportController:
             if not newTuplesChunk:
                 break
 
+        # If there are no tuples, do nothing
+        if not newTuples:
+            return
+
         # Notify the agent of the new keys.
         self._readApi.itemAdditionsObservable(modelSetName).on_next(newTuples)

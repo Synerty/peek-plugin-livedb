@@ -2,6 +2,7 @@ import logging
 from datetime import datetime
 from typing import List
 
+import pytz
 from sqlalchemy.sql.expression import select
 from txcelery.defer import DeferrableTask
 
@@ -27,7 +28,7 @@ def importLiveDbItems(self, modelSetName: str,
     :returns: A list of grid keys that have been updated.
     """
 
-    startTime = datetime.utcnow()
+    startTime = datetime.now(pytz.utc)
 
     session = CeleryDbConn.getDbSession()
     engine = CeleryDbConn.getDbEngine()
@@ -89,7 +90,7 @@ def importLiveDbItems(self, modelSetName: str,
 
         transaction.commit()
         logger.info("Inserted %s LiveDbItems, %s already existed, in %s",
-                    len(inserts), len(existingKeys), (datetime.utcnow() - startTime))
+                    len(inserts), len(existingKeys), (datetime.now(pytz.utc) - startTime))
 
         return newKeys
 

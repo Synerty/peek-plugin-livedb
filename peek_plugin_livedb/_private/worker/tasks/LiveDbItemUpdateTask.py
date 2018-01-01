@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+import pytz
 from collections import namedtuple
 from sqlalchemy.sql.expression import bindparam, and_
 from txcelery.defer import CeleryClient, DeferrableTask
@@ -26,7 +27,7 @@ def updateValues(self, modelSetName, updates, raw=True):
     :returns: A list of grid keys that have been updated.
     """
 
-    startTime = datetime.utcnow()
+    startTime = datetime.now(pytz.utc)
     table = LiveDbItem.__table__
 
     session = CeleryDbConn.getDbSession()
@@ -46,7 +47,7 @@ def updateValues(self, modelSetName, updates, raw=True):
         logger.debug("Updated %s %s values, in %s",
                      len(updates),
                      "raw" if raw else "display",
-                     (datetime.utcnow() - startTime))
+                     (datetime.now(pytz.utc) - startTime))
 
     except Exception as e:
         logger.exception(e)

@@ -7,16 +7,33 @@ from twisted.internet.defer import Deferred
 
 class LiveDBReadApiABC(metaclass=ABCMeta):
     @abstractmethod
-    def priorityLiveDbKeysObservable(self, modelSetName: str) -> Subject:
-        """ Priority Live DB ID Observable
+    def priorityKeysObservable(self, modelSetName: str) -> Subject:
+        """ Priority Live DB Key Observable
 
         This observable emits list of keys that the live db acquisition plugins should
-        prioritise.
+        prioritised, these keys will be monitored until the next
+        priorityLiveDbKey update.
 
         This list will represent keys relating to the objects that are
         currently being viewed.
 
-        :param modelSetName:  The name of the model set to import the disps into
+        :param modelSetName:  The name of the model set of the keys to observe.
+
+        :return: An observable that emits a List[str].
+
+        """
+
+    @abstractmethod
+    def pollKeysObservable(self, modelSetName: str) -> Subject:
+        """ Poll Live DB Key Observable
+
+        This observable emits list of keys that the live db acquisition plugins should
+        poll ONCE.
+
+        This list will represent keys relating to the objects that are
+        currently being viewed.
+
+        :param modelSetName:  The name of the model set of the keys to observe.
 
         :return: An observable that emits a List[str].
 

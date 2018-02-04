@@ -74,6 +74,11 @@ class LiveDBWriteApi(LiveDBWriteApiABC):
 
     def prioritiseLiveDbValueAcquisition(self, modelSetName: str,
                                          liveDbKeys: List[str]) -> Deferred:
-        self._readApi.priorityLiveDbKeysObservable(modelSetName).on_next(liveDbKeys)
+        self._readApi.priorityKeysObservable(modelSetName).on_next(liveDbKeys)
+        return defer.succeed(True)
+
+    def pollLiveDbValueAcquisition(self, modelSetName: str,
+                                         liveDbKeys: List[str]) -> Deferred:
+        self._readApi.pollKeysObservable(modelSetName).on_next(liveDbKeys)
         return defer.succeed(True)
 

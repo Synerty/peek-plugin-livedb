@@ -60,7 +60,7 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
     @abstractmethod
     def prioritiseLiveDbValueAcquisition(self, modelSetName: str,
                                          liveDbKeys: List[str]) -> Deferred:
-        """ Prioritise LiveDB Value Aquasitions
+        """ Prioritise LiveDB Value Acquisitions
 
         When this method was first created, it was used for the diagram to tell the
         RealTime agent which keys to update as they were viewed by the user.
@@ -68,7 +68,24 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
         :param modelSetName:  The name of the model set for the live db
         :param liveDbKeys: A list of the livedb keys to watch
 
-        :return: A deferred that fires when the inserts are complete.
+        :return: A deferred that fires with True
+        :rtype: bool
+
+        """
+
+    @abstractmethod
+    def pollLiveDbValueAcquisition(self, modelSetName: str,
+                                         liveDbKeys: List[str]) -> Deferred:
+        """ Poll LiveDB Value Acquisitions
+
+        Tell the LiveDB plugin the liveDbKeys must be polled.
+
+        This method should be called after a re-import of an existing grid.
+
+        :param modelSetName:  The name of the model set for the live db
+        :param liveDbKeys: A list of the livedb keys to poll
+
+        :return: A deferred that fires with True
         :rtype: bool
 
         """

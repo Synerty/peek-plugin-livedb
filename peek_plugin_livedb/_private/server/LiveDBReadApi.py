@@ -27,6 +27,7 @@ class LiveDBReadApi(LiveDBReadApiABC):
         self._dbEngine = dbEngine
 
         self._prioritySubject = defaultdict(Subject)
+        self._pollSubject = defaultdict(Subject)
         self._additionsSubject = defaultdict(Subject)
         self._deletionsSubject = defaultdict(Subject)
         self._rawValueUpdatesSubject = defaultdict(Subject)
@@ -35,8 +36,11 @@ class LiveDBReadApi(LiveDBReadApiABC):
     def shutdown(self):
         pass
 
-    def priorityLiveDbKeysObservable(self, modelSetName: str) -> Subject:
+    def priorityKeysObservable(self, modelSetName: str) -> Subject:
         return self._prioritySubject[modelSetName]
+
+    def pollKeysObservable(self, modelSetName: str) -> Subject:
+        return self._pollSubject[modelSetName]
 
     def itemAdditionsObservable(self, modelSetName: str) -> Subject:
         return self._additionsSubject[modelSetName]

@@ -1,6 +1,6 @@
+from abc import ABCMeta, abstractmethod
 from typing import Optional, List
 
-from abc import ABCMeta, abstractmethod
 from rx.subjects import Subject
 from twisted.internet.defer import Deferred
 
@@ -67,12 +67,14 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
 
     @abstractmethod
     def bulkLoadDeferredGenerator(self, modelSetName: str,
-                                  keyList: Optional[List[str]] = None) -> Deferred:
+                                  keyList: Optional[List[str]] = None,
+                                  chunkSize: int = 2500) -> Deferred:
         """ Live DB Tuples
 
         Return a generator that returns deferreds that are fired with chunks of the
          entire live db.
 
+        :param chunkSize: The number of items to return for each chunk
         :param modelSetName:  The name of the model set for the live db
         :param keyList:  An optional list of keys that the data is required for
 

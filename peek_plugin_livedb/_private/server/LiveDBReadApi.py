@@ -49,9 +49,10 @@ class LiveDBReadApi(LiveDBReadApiABC):
         return self._deletionsSubject[modelSetName]
 
     def bulkLoadDeferredGenerator(self, modelSetName: str,
-                                  keyList: Optional[List[str]] = None) -> Deferred:
+                                  keyList: Optional[List[str]] = None,
+                                  chunkSize: int = 2500) -> Deferred:
         offset = 0
-        limit = 2500
+        limit = chunkSize
         while True:
             yield qryChunk(modelSetName, offset, limit, keyList, self._dbSessionCreator)
             offset += limit

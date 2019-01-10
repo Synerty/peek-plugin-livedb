@@ -1,6 +1,6 @@
 {
     "plugin": {
-        "title": "LiveDB",
+        "title": "Live DB",
         "packageName": "peek_plugin_livedb",
     "version":"1.2.2",
         "buildNumber": "#PLUGIN_BUILD#",

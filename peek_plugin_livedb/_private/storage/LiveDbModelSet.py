@@ -13,10 +13,10 @@ class LiveDbModelSet(Tuple, DeclarativeBase):
     __tupleType__ = livedbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), nullable=False, unique=True)
+    name = Column(String, nullable=False, unique=True)
     comment = Column(String)
 
-    propsJson = Column(String(500))
+    propsJson = Column(String)
 
 
 def getOrCreateLiveDbModelSet(session, modelSetName:str) -> LiveDbModelSet:

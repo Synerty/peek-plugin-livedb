@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from sqlalchemy import Column, text
 from sqlalchemy import ForeignKey
@@ -7,7 +6,6 @@ from sqlalchemy import Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.schema import Index, Sequence
 
-from peek_plugin_base.storage.AlembicEnvBase import isPostGreSQLDialect, isMssqlDialect
 from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
 from vortex.Tuple import Tuple, addTupleType, JSON_EXCLUDE
 from .DeclarativeBase import DeclarativeBase
@@ -40,21 +38,21 @@ class LiveDbItem(Tuple, DeclarativeBase):
     modelSet = relationship(LiveDbModelSet)
 
     # comment="The unique reference of the value we want from the live db"
-    key = Column(String(50), nullable=False)
+    key = Column(String, nullable=False)
 
     # comment="The last value from the source"
-    rawValue = Column(String(255))
+    rawValue = Column(String)
 
     # comment="The PEEK value, converted to PEEK IDs if required (Color for example)"
-    displayValue = Column(String(255))
+    displayValue = Column(String)
 
     # comment="The type of data this value represents"
     dataType = Column(Integer, nullable=False)
 
-    importHash = Column(String(100))
+    importHash = Column(String)
 
     # Store custom props for this link
-    propsJson = Column(String(500))
+    propsJson = Column(String)
 
     __table_args__ = (
         Index("idx_LiveDbDKey_importHash", importHash, unique=False),

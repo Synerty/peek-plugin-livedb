@@ -44,7 +44,7 @@ def updateValues(self, modelSetName, updates, raw=True):
             dict(b_key=o.key, b_value=(o.rawValue if raw else o.displayValue))
             for o in updates])
 
-        logger.debug("Updated %s %s values, in %s",
+        logger.info("Updated %s %s values, in %s",
                      len(updates),
                      "raw" if raw else "display",
                      (datetime.now(pytz.utc) - startTime))

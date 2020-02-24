@@ -33,7 +33,3 @@ class WorkerEntryHook(PluginWorkerEntryHookABC):
                 LiveDbItemUpdateTask.__name__,
                 BulkLoadChunkTask.__name__]
 
-    @property
-    def celeryApp(self):
-        from .CeleryApp import celeryApp
-        return celeryApp

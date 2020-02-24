@@ -6,7 +6,7 @@ from txcelery.defer import DeferrableTask
 
 from peek_plugin_base.worker import CeleryDbConn
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_livedb._private.worker.CeleryApp import celeryApp
+from peek_plugin_base.worker.CeleryApp import celeryApp
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 
 logger = logging.getLogger(__name__)

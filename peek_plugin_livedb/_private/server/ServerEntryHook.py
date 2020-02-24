@@ -144,7 +144,3 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
 
     ###### Implement PluginServerWorkerEntryHookABC
 
-    @property
-    def celeryApp(self) -> Celery:
-        from peek_plugin_livedb._private.worker.CeleryApp import celeryApp
-        return celeryApp

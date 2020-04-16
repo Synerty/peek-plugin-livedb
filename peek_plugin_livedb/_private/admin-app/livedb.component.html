@@ -5,16 +5,16 @@
         <li role="presentation" class="active">
             <a href="#home" aria-controls="home" role="tab" data-toggle="tab">Home</a>
         </li>
-        <!-- Edit String Int Tab
+        <!-- Edit String Int Tab -->
         <li role="presentation">
-            <a href="#editStringInt" aria-controls="editStringInt" role="tab"
-               data-toggle="tab">Edit String Int</a>
-        </li> -->
-        <!-- Edit Settings Tab
+            <a href="#adminStatus" aria-controls="adminStatus" role="tab"
+               data-toggle="tab">Status</a>
+        </li>
+        <!-- Edit Settings Tab -->
         <li role="presentation">
             <a href="#editSetting" aria-controls="editSetting" role="tab"
                data-toggle="tab">Edit Settings</a>
-        </li>-->
+        </li>
     </ul>
 
     <!-- Tab panes -->
@@ -23,15 +23,15 @@
         <div role="tabpanel" class="tab-pane" id="editSetting">
             <pl-livedb-edit-setting></pl-livedb-edit-setting>
         </div>
-        <!-- Edit String Int Tab
-        <div role="tabpanel" class="tab-pane" id="editStringInt">
-            <pl-livedb-edit-string-int></pl-livedb-edit-string-int>
-        </div>-->
+        <!-- Edit String Int Tab -->
+        <div role="tabpanel" class="tab-pane" id="adminStatus">
+            <pl-livedb-status></pl-livedb-status>
+        </div>
         <!-- Home Tab -->
         <div role="tabpanel" class="tab-pane active" id="home">
             <h1 class="text-center">LiveDB</h1>
             <p>The LiveDB plugin stores "live" key/values,
-            these values can be updated and read very frequently.</p>
+                these values can be updated and read very frequently.</p>
         </div>
 
     </div>

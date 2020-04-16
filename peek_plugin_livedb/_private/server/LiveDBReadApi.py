@@ -1,30 +1,29 @@
 import logging
+from collections import defaultdict
 from typing import List, Optional
 
-from collections import defaultdict
+from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
 from rx.subjects import Subject
 from sqlalchemy import select
 from twisted.internet.defer import Deferred
+from vortex.DeferUtil import deferToThreadWrapWithLogger
 
-from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
     LiveDbController
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb.server.LiveDBReadApiABC import LiveDBReadApiABC
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
-from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 logger = logging.getLogger(__name__)
 
 
 class LiveDBReadApi(LiveDBReadApiABC):
-    def __init__(self, liveDbController: LiveDbController,
-                 dbSessionCreator,
-                 dbEngine):
-        self._liveDbController = liveDbController
-        self._dbSessionCreator = dbSessionCreator
-        self._dbEngine = dbEngine
+
+    def __init__(self):
+        self._liveDbController = None
+        self._dbSessionCreator = None
+        self._dbEngine = None
 
         self._prioritySubject = defaultdict(Subject)
         self._pollSubject = defaultdict(Subject)
@@ -32,6 +31,13 @@ class LiveDBReadApi(LiveDBReadApiABC):
         self._deletionsSubject = defaultdict(Subject)
         self._rawValueUpdatesSubject = defaultdict(Subject)
         self._displayValueUpdatesSubject = defaultdict(Subject)
+
+    def setup(self, liveDbController: LiveDbController,
+              dbSessionCreator,
+              dbEngine):
+        self._liveDbController = liveDbController
+        self._dbSessionCreator = dbSessionCreator
+        self._dbEngine = dbEngine
 
     def shutdown(self):
         pass

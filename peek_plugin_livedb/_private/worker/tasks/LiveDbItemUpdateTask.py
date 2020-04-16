@@ -1,58 +1,173 @@
 import logging
+from collections import defaultdict
 from datetime import datetime
+from typing import List, Dict
 
 import pytz
-from collections import namedtuple
-from sqlalchemy.sql.expression import bindparam, and_
-from txcelery.defer import CeleryClient, DeferrableTask
-
 from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_base.worker.CeleryApp import celeryApp
-from vortex.Payload import Payload
+from sqlalchemy.sql.expression import bindparam, and_, select
+from txcelery.defer import DeferrableTask
+
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
+from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet, \
+    LiveDbModelSet
+from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue
+from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 
 logger = logging.getLogger(__name__)
 
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def updateValues(self, modelSetName, updates, raw=True):
+def updateValues(self, queueIds: List[int],
+                 allModelUpdates: List[LiveDbRawValueQueue]) -> None:
     """ Compile Grids Task
 
+    :param queueIds: The IDs of the items from the queue
     :param self: A celery reference to this task
-    :param modelSetName: The model set name
-    :param updates: An encoded payload containing the updates
-    :param raw: Are the updates raw updates?
-    :returns: A list of grid keys that have been updated.
+    :param allModelUpdates: The updates from the queue controller
+    :returns: None
     """
 
-    startTime = datetime.now(pytz.utc)
-    table = LiveDbItem.__table__
+    # Group the data by model set
+    updatesByModelSetKey = defaultdict(list)
+    for update in allModelUpdates:
+        updatesByModelSetKey[update.modelSetKey].append(update)
 
-    session = CeleryDbConn.getDbSession()
-    conn = CeleryDbConn.getDbEngine().connect()
+    ormSession = CeleryDbConn.getDbSession()
     try:
-        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
 
-        sql = (table.update()
-               .where(and_(table.c.key == bindparam('b_key'),
-                           table.c.modelSetId == liveDbModelSet.id))
-               .values({"rawValue" if raw else "displayValue": bindparam("b_value")}))
+        for modelSetKey, modelUpdates in updatesByModelSetKey.items():
+            _updateValuesForModelSet(modelSetKey, modelUpdates,
+                                     ormSession, queueIds)
 
-        conn.execute(sql, [
-            dict(b_key=o.key, b_value=(o.rawValue if raw else o.displayValue))
-            for o in updates])
-
-        logger.info("Updated %s %s values, in %s",
-                     len(updates),
-                     "raw" if raw else "display",
-                     (datetime.now(pytz.utc) - startTime))
+        ormSession.commit()
 
     except Exception as e:
         logger.exception(e)
         raise self.retry(exc=e, countdown=2)
 
     finally:
-        session.close()
-        conn.close()
+        ormSession.close()
+
+
+def _updateValuesForModelSet(modelSetKey, modelUpdates, ormSession,
+                             queueIds):
+    startTime = datetime.now(pytz.utc)
+
+    # Try to load the Diagram plugins API
+    try:
+        from peek_plugin_diagram.worker.WorkerApi import WorkerApi as DiagramWorkerApi
+    except ImportError:
+        logger.warning("Failed to load the diagram WorkerAPI")
+        DiagramWorkerApi = None
+
+    table = LiveDbItem.__table__
+    dispQueueTable = LiveDbRawValueQueue.__table__
+
+    # Load the Model Set
+    liveDbModelSet = getOrCreateLiveDbModelSet(ormSession, modelSetKey)
+
+    # Create a list of keys
+    updatedKeys = [i.key for i in modelUpdates]
+
+    # ---------------
+    # Make a list of display items from the provided data
+    displayItems = _makeDisplayValueTuples(liveDbModelSet, modelUpdates,
+                                           ormSession, updatedKeys)
+
+    # ---------------
+    # Get the Diagram plugin to convert the live db values
+    if DiagramWorkerApi:
+        DiagramWorkerApi.updateLiveDbDisplayValues(
+            ormSession,
+            modelSetKey=modelSetKey,
+            liveDbRawValues=displayItems
+        )
+
+    # ---------------
+    # Update the the values in the tables
+    sql = (table.update()
+           .where(and_(table.c.key == bindparam('b_key'),
+                       table.c.modelSetId == liveDbModelSet.id))
+           .values({"rawValue": bindparam("b_rawValue"),
+                    "displayValue": bindparam("b_displayValue")}))
+
+    ormSession.execute(sql, [
+        dict(b_key=o.key,
+             b_rawValue=o.rawValue,
+             b_displayValue=o.displayValue)
+        for o in displayItems])
+
+    # ---------------
+    # Tell the diagram plugin that livedb values have been updated
+    if DiagramWorkerApi:
+        DiagramWorkerApi.liveDbDisplayValueUpdateNotify(
+            ormSession,
+            modelSetKey=modelSetKey,
+            updatedKeys=updatedKeys
+        )
+
+    # ---------------
+    # delete the queue items
+    ormSession.execute(
+        dispQueueTable.delete(dispQueueTable.c.id.in_(queueIds))
+    )
+
+    # ---------------
+    # Finally, tell log some statistics
+    logger.info("Updated %s raw values for modelSet %s, in %s",
+                len(modelUpdates),
+                modelSetKey,
+                (datetime.now(pytz.utc) - startTime))
+
+
+def _makeDisplayValueTuples(liveDbModelSet, modelUpdates, ormSession, updatedKeys):
+    # Load the key typ lookups
+    dataTypeLookup = _getLiveDbKeyDatatypeDict(
+        ormSession,
+        liveDbModelSet,
+        liveDbKeys=updatedKeys
+    )
+
+    displayItems = []
+    for update in modelUpdates:
+        displayItems.append(LiveDbDisplayValueTuple(
+            key=update.key,
+            dataType=dataTypeLookup.get(update.key),
+            rawValue=update.rawValue
+        ))
+
+    return displayItems
+
+
+def _getLiveDbKeyDatatypeDict(ormSession,
+                              liveDbModelSet: LiveDbModelSet,
+                              liveDbKeys: List[str]) -> Dict[str, int]:
+    """ Get Live DB DataTypes
+
+    Return an array of items representing the display values from the LiveDB.
+
+    :param ormSession: The SQLAlchemy orm session from the calling code.
+    :param liveDbModelSet: The name of the model set to get the keys for
+    :param liveDbKeys: An array of LiveDb Keys.
+
+    :returns: An array of tuples.
+    """
+    liveDbTable = LiveDbItem.__table__
+    modelTable = LiveDbModelSet.__table__
+
+    if not liveDbKeys:
+        return {}
+
+    liveDbKeys = list(set(liveDbKeys))  # Remove duplicates if any exist.
+    stmt = select([liveDbTable.c.key, liveDbTable.c.dataType]) \
+        .select_from(liveDbTable
+                     .join(modelTable,
+                           liveDbTable.c.modelSetId == modelTable.c.id)) \
+        .where(modelTable.c.name == liveDbModelSet.name) \
+        .where(liveDbTable.c.key.in_(liveDbKeys))
+
+    resultSet = ormSession.execute(stmt)
+    return dict(resultSet.fetchall())

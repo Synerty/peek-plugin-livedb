@@ -1,12 +1,13 @@
 import logging
 
-from celery import Celery
-
 from peek_plugin_base.server.PluginServerEntryHookABC import PluginServerEntryHookABC
 from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
     PluginServerWorkerEntryHookABC
+from twisted.internet.defer import inlineCallbacks
+from vortex.DeferUtil import deferToThreadWrapWithLogger
+
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
     LiveDbController
 from peek_plugin_livedb._private.server.controller.LiveDbImportController import \
@@ -19,7 +20,11 @@ from .LiveDBApi import LiveDBApi
 from .TupleActionProcessor import makeTupleActionProcessorHandler
 from .TupleDataObservable import makeTupleDataObservableHandler
 from .admin_backend import makeAdminBackendHandlers
+from .controller.AdminStatusController import AdminStatusController
+from .controller.LiveDbRawValueUpdateQueueController import \
+    LiveDbRawValueUpdateQueueController
 from .controller.MainController import MainController
+from ..storage.Setting import VALUE_UPDATER_ENABLED, globalProperties, globalSetting
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +48,9 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
         Place any custom initialiastion steps here.
 
         """
+        self._api = LiveDBApi()
+        self._loadedObjects.append(self._api)
+
         loadStorageTuples()
         loadPrivateTuples()
         loadPublicTuples()
@@ -52,6 +60,7 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
     def dbMetadata(self):
         return DeclarativeBase.metadata
 
+    @inlineCallbacks
     def start(self):
         """ Start
 
@@ -60,50 +69,69 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
 
         """
 
-        tupleObservable = makeTupleDataObservableHandler(self.dbSessionCreator)
+        # ----------------
+        # create the Status Controller
+        statusController = AdminStatusController()
+        self._loadedObjects.append(statusController)
 
+        # ----------------
+        # Create the Tuple Observer
+        tupleObservable = makeTupleDataObservableHandler(self.dbSessionCreator,
+                                                         statusController)
+        self._loadedObjects.append(tupleObservable)
+
+        # ----------------
+        # Tell the status controller about the Tuple Observable
+        statusController.setTupleObservable(tupleObservable)
+
+        # ----------------
+        # Initialise the handlers for the admin interface
         self._loadedObjects.extend(
             makeAdminBackendHandlers(tupleObservable, self.dbSessionCreator))
 
-        self._loadedObjects.append(tupleObservable)
-
-        # session = self.dbSessionCreator()
-        #
-        # This will retrieve all the settings
-        # from peek_plugin_livedb._private.storage.Setting import globalSetting
-        # allSettings = globalSetting(session)
-        # logger.debug(allSettings)
-        #
-        # This will retrieve the value of property1
-        # from peek_plugin_livedb._private.storage.Setting import PROPERTY1
-        # value1 = globalSetting(session, key=PROPERTY1)
-        # logger.debug("value1 = %s" % value1)
-        #
-        # This will set property1
-        # globalSetting(session, key=PROPERTY1, value="new value 1")
-        # session.commit()
-        #
-        # session.close()
-
+        # ----------------
+        # create the Main Controller
         mainController = MainController(
             dbSessionCreator=self.dbSessionCreator,
             tupleObservable=tupleObservable)
 
         self._loadedObjects.append(mainController)
+
+        # ----------------
+        # Create the Action Processor
         self._loadedObjects.append(makeTupleActionProcessorHandler(mainController))
 
+        # ----------------
+        # Create the LiveDB controller
         liveDbController = LiveDbController(self.dbSessionCreator)
         self._loadedObjects.append(liveDbController)
 
+        # ----------------
+        # Create the Import Controller
         liveDbImportController = LiveDbImportController(self.dbSessionCreator)
         self._loadedObjects.append(liveDbImportController)
 
+        # ----------------
+        # Create the Queue Controller
+        queueController = LiveDbRawValueUpdateQueueController(self.dbSessionCreator,
+                                                              statusController)
+        self._loadedObjects.append(queueController)
+
+        # ----------------
         # Initialise the API object that will be shared with other plugins
-        self._api = LiveDBApi(liveDbController=liveDbController,
-                              liveDbImportController=liveDbImportController,
-                              dbSessionCreator=self.dbSessionCreator,
-                              dbEngine=self.dbEngine)
-        self._loadedObjects.append(self._api)
+        self._api.setup(queueController=queueController,
+                        liveDbController=liveDbController,
+                        liveDbImportController=liveDbImportController,
+                        dbSessionCreator=self.dbSessionCreator,
+                        dbEngine=self.dbEngine)
+
+        # ----------------
+        # Start the queue controller
+
+        settings = yield self._loadSettings()
+
+        if settings[VALUE_UPDATER_ENABLED]:
+            queueController.start()
 
         # noinspection PyTypeChecker
         liveDbImportController.setReadApi(self._api.readApi)
@@ -142,5 +170,14 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
         """
         return self._api
 
-    ###### Implement PluginServerWorkerEntryHookABC
+    @deferToThreadWrapWithLogger(logger)
+    def _loadSettings(self):
+        dbSession = self.dbSessionCreator()
+        try:
+            return {globalProperties[p.key]: p.value
+                    for p in globalSetting(dbSession).propertyObjects}
 
+        finally:
+            dbSession.close()
+
+    ###### Implement PluginServerWorkerEntryHookABC

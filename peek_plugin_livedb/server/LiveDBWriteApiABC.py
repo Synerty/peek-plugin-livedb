@@ -26,21 +26,6 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def updateDisplayValue(self, modelSetName: str,
-                           updates: List[LiveDbDisplayValueUpdateTuple]) -> Deferred:
-        """ Process Live DB Raw+Display Value Updates
-
-        Tells the live db that values have updated in the field, or wherever.
-
-        :param modelSetName:  The name of the model set for the live db
-        :param updates: A list of tuples containing the value updates
-
-        :return: A deferred that fires when the update is complete.
-        :rtype: bool
-
-        """
-
-    @abstractmethod
     def importLiveDbItems(self, modelSetName: str,
                           newItems: List[ImportLiveDbItemTuple]) -> Deferred:
         """ Import LiveDB Items

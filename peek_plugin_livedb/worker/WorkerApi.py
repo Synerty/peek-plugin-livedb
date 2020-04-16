@@ -25,7 +25,7 @@ class WorkerApi:
                                ormSession,
                                modelSetName: str,
                                liveDbKeys: List[str]
-                               ) -> List[LiveDbRawValueTuple]:
+                               ) -> List[LiveDbDisplayValueTuple]:
         """ Get Live DB Display Values
 
         Return an array of items representing the display values from the LiveDB.
@@ -63,35 +63,3 @@ class WorkerApi:
 
         return results
 
-    @classmethod
-    def getLiveDbKeyDatatypeDict(cls, ormSession,
-                                 modelSetName: str,
-                                 liveDbKeys: List[str]) -> Dict[str, int]:
-        """ Get Live DB Display Values
-
-        Return an array of items representing the display values from the LiveDB.
-
-        :param ormSession: The SQLAlchemy orm session from the calling code.
-        :param modelSetName: The name of the model set to get the keys for
-        :param liveDbKeys: An array of LiveDb Keys.
-
-        :returns: An array of tuples.
-        """
-        liveDbTable = LiveDbItem.__table__
-        modelTable = LiveDbModelSet.__table__
-
-        if not liveDbKeys:
-            return {}
-
-        liveDbKeys = list(set(liveDbKeys))  # Remove duplicates if any exist.
-        stmt = (select([liveDbTable.c.key, liveDbTable.c.dataType])
-                .select_from(liveDbTable
-                             .join(modelTable,
-                                   liveDbTable.c.modelSetId == modelTable.c.id))
-                .where(modelTable.c.name == modelSetName)
-                .where(makeCoreValuesSubqueryCondition(
-                    ormSession.bind, liveDbTable.c.key, liveDbKeys
-                ))
-        )
-        resultSet = ormSession.execute(stmt)
-        return dict(resultSet.fetchall())

@@ -1,4 +1,3 @@
-
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm.collections import attribute_mapped_collection
@@ -10,7 +9,6 @@ from vortex.Tuple import Tuple, addTupleType
 
 from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
 from .DeclarativeBase import DeclarativeBase
-
 
 """Mapping a polymorphic-valued vertical table as a dictionary.
 
@@ -256,3 +254,7 @@ globalProperties = {}
 
 def globalSetting(ormSession, key=None, value=None):
     return _getSetting(ormSession, "Global", globalProperties, key=key, value=value)
+
+
+VALUE_UPDATER_ENABLED = PropertyKey('Value Updater Enabled', True,
+                                    propertyDict=globalProperties)

@@ -23,7 +23,7 @@ class WorkerApi:
     @classmethod
     def getLiveDbDisplayValues(cls,
                                ormSession,
-                               modelSetName: str,
+                               modelSetKey: str,
                                liveDbKeys: List[str]
                                ) -> List[LiveDbDisplayValueTuple]:
         """ Get Live DB Display Values
@@ -31,7 +31,7 @@ class WorkerApi:
         Return an array of items representing the display values from the LiveDB.
 
         :param ormSession: The SQLAlchemy orm session from the calling code.
-        :param modelSetName: The name of the model set to get the keys for
+        :param modelSetKey: The name of the model set to get the keys for
         :param liveDbKeys: An array of LiveDb Keys.
 
         :returns: An array of tuples.
@@ -39,7 +39,7 @@ class WorkerApi:
         if not liveDbKeys:
             return []
 
-        liveDbModelSet = getOrCreateLiveDbModelSet(ormSession, modelSetName)
+        liveDbModelSet = getOrCreateLiveDbModelSet(ormSession, modelSetKey)
 
         liveDbKeys = set(liveDbKeys)  # Remove duplicates if any exist.
         qry = (

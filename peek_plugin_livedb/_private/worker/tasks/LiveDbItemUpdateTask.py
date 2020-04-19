@@ -10,9 +10,9 @@ from sqlalchemy.sql.expression import bindparam, and_, select
 from txcelery.defer import DeferrableTask
 
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet, \
-    LiveDbModelSet
-from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue
+from peek_plugin_livedb._private.storage.LiveDbModelSet import LiveDbModelSet
+from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue, \
+    LiveDbRawValueQueueTuple
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @DeferrableTask
 @celeryApp.task(bind=True)
 def updateValues(self, queueIds: List[int],
-                 allModelUpdates: List[LiveDbRawValueQueue]) -> None:
+                 allModelUpdates: List[LiveDbRawValueQueueTuple]) -> None:
     """ Compile Grids Task
 
     :param queueIds: The IDs of the items from the queue
@@ -29,20 +29,34 @@ def updateValues(self, queueIds: List[int],
     :param allModelUpdates: The updates from the queue controller
     :returns: None
     """
+    startTime = datetime.now(pytz.utc)
 
     # Group the data by model set
-    updatesByModelSetKey = defaultdict(list)
+    updatesByModelSetId = defaultdict(list)
     for update in allModelUpdates:
-        updatesByModelSetKey[update.modelSetKey].append(update)
+        updatesByModelSetId[update.modelSetId].append(update)
 
     ormSession = CeleryDbConn.getDbSession()
     try:
 
-        for modelSetKey, modelUpdates in updatesByModelSetKey.items():
-            _updateValuesForModelSet(modelSetKey, modelUpdates,
+        for modelSetId, modelUpdates in updatesByModelSetId.items():
+            _updateValuesForModelSet(modelSetId, modelUpdates,
                                      ormSession, queueIds)
 
+        # ---------------
+        # delete the queue items
+        dispQueueTable = LiveDbRawValueQueue.__table__
+        ormSession.execute(
+            dispQueueTable.delete(dispQueueTable.c.id.in_(queueIds))
+        )
+
         ormSession.commit()
+
+        # ---------------
+        # Finally, tell log some statistics
+        logger.info("Updated %s raw values in %s",
+                    len(allModelUpdates),
+                    (datetime.now(pytz.utc) - startTime))
 
     except Exception as e:
         logger.exception(e)
@@ -52,10 +66,8 @@ def updateValues(self, queueIds: List[int],
         ormSession.close()
 
 
-def _updateValuesForModelSet(modelSetKey, modelUpdates, ormSession,
+def _updateValuesForModelSet(modelSetId, modelUpdates, ormSession,
                              queueIds):
-    startTime = datetime.now(pytz.utc)
-
     # Try to load the Diagram plugins API
     try:
         from peek_plugin_diagram.worker.WorkerApi import WorkerApi as DiagramWorkerApi
@@ -64,10 +76,11 @@ def _updateValuesForModelSet(modelSetKey, modelUpdates, ormSession,
         DiagramWorkerApi = None
 
     table = LiveDbItem.__table__
-    dispQueueTable = LiveDbRawValueQueue.__table__
 
     # Load the Model Set
-    liveDbModelSet = getOrCreateLiveDbModelSet(ormSession, modelSetKey)
+    liveDbModelSet = ormSession.query(LiveDbModelSet) \
+        .filter(LiveDbModelSet.id == modelSetId) \
+        .one()
 
     # Create a list of keys
     updatedKeys = [i.key for i in modelUpdates]
@@ -82,7 +95,7 @@ def _updateValuesForModelSet(modelSetKey, modelUpdates, ormSession,
     if DiagramWorkerApi:
         DiagramWorkerApi.updateLiveDbDisplayValues(
             ormSession,
-            modelSetKey=modelSetKey,
+            modelSetKey=liveDbModelSet.name,
             liveDbRawValues=displayItems
         )
 
@@ -105,22 +118,9 @@ def _updateValuesForModelSet(modelSetKey, modelUpdates, ormSession,
     if DiagramWorkerApi:
         DiagramWorkerApi.liveDbDisplayValueUpdateNotify(
             ormSession,
-            modelSetKey=modelSetKey,
+            modelSetKey=liveDbModelSet.key,
             updatedKeys=updatedKeys
         )
-
-    # ---------------
-    # delete the queue items
-    ormSession.execute(
-        dispQueueTable.delete(dispQueueTable.c.id.in_(queueIds))
-    )
-
-    # ---------------
-    # Finally, tell log some statistics
-    logger.info("Updated %s raw values for modelSet %s, in %s",
-                len(modelUpdates),
-                modelSetKey,
-                (datetime.now(pytz.utc) - startTime))
 
 
 def _makeDisplayValueTuples(liveDbModelSet, modelUpdates, ormSession, updatedKeys):

@@ -71,7 +71,7 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 
 @deferToThreadWrapWithLogger(logger)
-def qryChunk(modelSetName: str, offset: int, limit: int, keyList: List[str],
+def qryChunk(modelSetKey: str, offset: int, limit: int, keyList: List[str],
              dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
     # If they've given us an empty key list, that is what they will get back
     if keyList is not None and not keyList:
@@ -82,7 +82,7 @@ def qryChunk(modelSetName: str, offset: int, limit: int, keyList: List[str],
 
     session = dbSessionCreator()
     try:
-        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
+        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetKey)
 
         stmt = (select(cols)
                 .order_by(table.c.id)

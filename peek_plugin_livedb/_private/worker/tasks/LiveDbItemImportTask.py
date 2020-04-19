@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def importLiveDbItems(self, modelSetName: str,
+def importLiveDbItems(self, modelSetKey: str,
                       newItems: List[ImportLiveDbItemTuple]) -> List[str]:
     """ Compile Grids Task
 
     :param self: A celery reference to this task
-    :param modelSetName: The model set name
+    :param modelSetKey: The model set name
     :param newItems: The list of new items
     :returns: A list of grid keys that have been updated.
     """
@@ -38,7 +38,7 @@ def importLiveDbItems(self, modelSetName: str,
     liveDbTable = LiveDbItem.__table__
     try:
 
-        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetName)
+        liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetKey)
 
         # This will remove duplicates
         itemsByKey = {i.key: i for i in newItems}

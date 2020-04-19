@@ -1,5 +1,4 @@
 import logging
-import typing
 from collections import deque, namedtuple
 from datetime import datetime
 from typing import List, Deque
@@ -7,7 +6,7 @@ from typing import List, Deque
 import pytz
 from sqlalchemy.sql.expression import asc, select, bindparam
 from twisted.internet import task, reactor, defer
-from twisted.internet.defer import inlineCallbacks, DeferredSemaphore
+from twisted.internet.defer import inlineCallbacks
 from vortex.DeferUtil import deferToThreadWrapWithLogger, vortexLogFailure
 
 from peek_plugin_livedb._private.server.controller.AdminStatusController import \

@@ -1,13 +1,13 @@
 import logging
 
+from twisted.internet.defer import inlineCallbacks
+from vortex.DeferUtil import deferToThreadWrapWithLogger
+
 from peek_plugin_base.server.PluginServerEntryHookABC import PluginServerEntryHookABC
 from peek_plugin_base.server.PluginServerStorageEntryHookABC import \
     PluginServerStorageEntryHookABC
 from peek_plugin_base.server.PluginServerWorkerEntryHookABC import \
     PluginServerWorkerEntryHookABC
-from twisted.internet.defer import inlineCallbacks
-from vortex.DeferUtil import deferToThreadWrapWithLogger
-
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
     LiveDbController
 from peek_plugin_livedb._private.server.controller.LiveDbImportController import \
@@ -21,8 +21,8 @@ from .TupleActionProcessor import makeTupleActionProcessorHandler
 from .TupleDataObservable import makeTupleDataObservableHandler
 from .admin_backend import makeAdminBackendHandlers
 from .controller.AdminStatusController import AdminStatusController
-from .controller.LiveDbRawValueUpdateQueueController import \
-    LiveDbRawValueUpdateQueueController
+from .controller.LiveDbValueUpdateQueueController import \
+    LiveDbValueUpdateQueueController
 from .controller.MainController import MainController
 from ..storage.Setting import VALUE_UPDATER_ENABLED, globalProperties, globalSetting
 
@@ -113,8 +113,8 @@ class ServerEntryHook(PluginServerEntryHookABC, PluginServerStorageEntryHookABC,
 
         # ----------------
         # Create the Queue Controller
-        queueController = LiveDbRawValueUpdateQueueController(self.dbSessionCreator,
-                                                              statusController)
+        queueController = LiveDbValueUpdateQueueController(self.dbSessionCreator,
+                                                           statusController)
         self._loadedObjects.append(queueController)
 
         # ----------------

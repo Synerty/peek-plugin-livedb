@@ -4,8 +4,8 @@ from peek_plugin_livedb._private.server.controller.LiveDbController import \
     LiveDbController
 from peek_plugin_livedb._private.server.controller.LiveDbImportController import \
     LiveDbImportController
-from peek_plugin_livedb._private.server.controller.LiveDbRawValueUpdateQueueController import \
-    LiveDbRawValueUpdateQueueController
+from peek_plugin_livedb._private.server.controller.LiveDbValueUpdateQueueController import \
+    LiveDbValueUpdateQueueController
 from peek_plugin_livedb.server.LiveDBApiABC import LiveDBApiABC
 from peek_plugin_livedb.server.LiveDBReadApiABC import LiveDBReadApiABC
 from peek_plugin_livedb.server.LiveDBWriteApiABC import LiveDBWriteApiABC
@@ -17,7 +17,7 @@ class LiveDBApi(LiveDBApiABC):
         self._readApi = LiveDBReadApi()
         self._writeApi = LiveDBWriteApi()
 
-    def setup(self, queueController: LiveDbRawValueUpdateQueueController,
+    def setup(self, queueController: LiveDbValueUpdateQueueController,
               liveDbController: LiveDbController,
               liveDbImportController: LiveDbImportController,
               dbSessionCreator,

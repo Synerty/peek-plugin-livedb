@@ -5,6 +5,8 @@ from sqlalchemy import Column, BigInteger
 from sqlalchemy import Integer, String
 from vortex.Tuple import Tuple, addTupleType
 
+from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import \
+    ACIProcessorQueueTupleABC
 from .DeclarativeBase import DeclarativeBase
 from ..PluginNames import livedbTuplePrefix
 
@@ -12,7 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 @addTupleType
-class LiveDbRawValueQueue(Tuple, DeclarativeBase):
+class LiveDbRawValueQueue(Tuple, DeclarativeBase,
+                          ACIProcessorQueueTupleABC):
+
     __tablename__ = 'LiveDbRawValueQueue'
     __tupleType__ = livedbTuplePrefix + __tablename__
 
@@ -21,6 +25,14 @@ class LiveDbRawValueQueue(Tuple, DeclarativeBase):
     modelSetId = Column(Integer, primary_key=True)
     key = Column(String, primary_key=True)
     rawValue = Column(String, primary_key=True)
+
+    @classmethod
+    def sqlCoreLoad(cls, row):
+        return LiveDbRawValueQueueTuple(row.id, row.modelSetId, row.key, row.rawValue)
+
+    def ckiUniqueKey(self):
+        """ See LiveDbRawValueQueueTuple.ckiUniqueKey """
+        raise NotImplementedError()
 
 
 @addTupleType
@@ -58,5 +70,5 @@ class LiveDbRawValueQueueTuple(Tuple):
         return self.data[3]
 
     @property
-    def modelSetIdKey(self):
+    def ckiUniqueKey(self):
         return "%s:%s" % (self.modelSetId, self.key)

@@ -1,8 +1,6 @@
 import logging
 from typing import List
 
-from vortex.DeferUtil import deferToThreadWrapWithLogger
-
 from peek_abstract_chunked_index.private.server.controller.ACIProcessorQueueControllerABC import \
     ACIProcessorQueueControllerABC, ACIProcessorQueueBlockItem
 from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusNotifierABC import \
@@ -14,6 +12,7 @@ from peek_plugin_livedb._private.server.controller.AdminStatusController import 
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue
 from peek_plugin_livedb.tuples.LiveDbRawValueUpdateTuple import LiveDbRawValueUpdateTuple
+from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +36,6 @@ class _Notifier(ACIProcessorStatusNotifierABC):
 
 
 class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
-
     QUEUE_ITEMS_PER_TASK = 500
     POLL_PERIOD_SECONDS = 0.200
 
@@ -53,6 +51,8 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
     def __init__(self, ormSessionCreator, adminStatusController: AdminStatusController):
         ACIProcessorQueueControllerABC.__init__(self, ormSessionCreator,
                                                 _Notifier(adminStatusController))
+
+        self._modelSetIdByKey = {}
 
     def _sendToWorker(self, block: ACIProcessorQueueBlockItem):
         from peek_plugin_livedb._private.worker.tasks.LiveDbItemUpdateTask import \
@@ -82,11 +82,15 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
         try:
             logger.debug("Queueing %s raw values for compile", len(updates))
 
-            modelSet = getOrCreateLiveDbModelSet(ormSession, modelSetKey=modelSetKey)
+            if modelSetKey not in self._modelSetIdByKey:
+                modelSet = getOrCreateLiveDbModelSet(ormSession, modelSetKey=modelSetKey)
+                self._modelSetIdByKey[modelSet.key] = modelSet.id
+
+            modelSetId = self._modelSetIdByKey[modelSetKey]
 
             inserts = []
             for update in updates:
-                inserts.append(dict(modelSetId=modelSet.id,
+                inserts.append(dict(modelSetId=modelSetId,
                                     key=update.key,
                                     rawValue=update.rawValue))
 

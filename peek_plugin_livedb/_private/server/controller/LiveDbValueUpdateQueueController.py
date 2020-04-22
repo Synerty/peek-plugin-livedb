@@ -36,6 +36,9 @@ class _Notifier(ACIProcessorStatusNotifierABC):
 
 
 class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
+    # Prioritize the livedb updater.
+    MAX_CPU_PERCENTAGE = 85.00
+
     QUEUE_ITEMS_PER_TASK = 500
     POLL_PERIOD_SECONDS = 0.200
 

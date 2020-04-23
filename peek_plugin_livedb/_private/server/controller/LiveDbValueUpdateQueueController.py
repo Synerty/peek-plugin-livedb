@@ -70,7 +70,33 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
     # Deduplicate method
 
     def _dedupeQueueSql(self, lastFetchedId: int, dedupeLimit: int):
-        pass
+        """ Deduplicate Queue
+
+        NOTE: In this SQL, we take the last value added to the queue, as it will have
+        the latest value.
+
+        """
+        return '''
+                 with sq_raw as (
+                    SELECT "id", "modelSetId", "key"
+                    FROM pl_livedb."LiveDbRawValueQueue"
+                    WHERE id > %(id)s
+                    LIMIT %(limit)s
+                ), sq as (
+                    SELECT max(id) as "maxId", "modelSetId", "key"
+                    FROM sq_raw
+                    GROUP BY  "modelSetId", "key"
+                    HAVING count("key") > 1
+                )
+                DELETE
+                FROM pl_livedb."LiveDbRawValueQueue"
+                     USING sq sq1
+                WHERE pl_livedb."LiveDbRawValueQueue"."id" != sq1."maxId"
+                    AND pl_livedb."LiveDbRawValueQueue"."id" > %(id)s
+                    AND pl_livedb."LiveDbRawValueQueue"."modelSetId" = sq1."modelSetId"
+                    AND pl_livedb."LiveDbRawValueQueue"."key" = sq1."key"
+                    
+            ''' % {'id': lastFetchedId, 'limit': dedupeLimit}
 
     # ---------------
     # Insert into Queue methods

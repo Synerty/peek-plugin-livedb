@@ -42,9 +42,8 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
     QUEUE_ITEMS_PER_TASK = 500
     POLL_PERIOD_SECONDS = 0.200
 
-    # We don't deduplicate this queue, so we can fill it up
-    QUEUE_BLOCKS_MAX = 40
-    QUEUE_BLOCKS_MIN = 8
+    QUEUE_BLOCKS_MAX = 20
+    QUEUE_BLOCKS_MIN = 4
 
     WORKER_TASK_TIMEOUT = 60.0
 
@@ -83,6 +82,8 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
                     WHERE id > %(id)s
                     LIMIT %(limit)s
                 ), sq as (
+                    -- Select the latest queued update, this does require that updates
+                    -- come in, in order
                     SELECT max(id) as "maxId", "modelSetId", "key"
                     FROM sq_raw
                     GROUP BY  "modelSetId", "key"

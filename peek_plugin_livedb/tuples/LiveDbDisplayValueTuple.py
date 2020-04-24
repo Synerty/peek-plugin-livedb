@@ -1,7 +1,8 @@
-from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
-
-from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from vortex.Tuple import Tuple, addTupleType
+
+from peek_plugin_livedb._private.PluginNames import livedbTuplePrefix
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
+
 
 @addTupleType
 class LiveDbDisplayValueTuple(Tuple):
@@ -19,3 +20,9 @@ class LiveDbDisplayValueTuple(Tuple):
     DATA_TYPE_LINE_WIDTH = LiveDbItem.LINE_WIDTH
     DATA_TYPE_LINE_STYLE = LiveDbItem.LINE_STYLE
     DATA_TYPE_GROUP_PTR = LiveDbItem.GROUP_PTR
+
+    @classmethod
+    def sqlCoreLoad(cls, row):
+        return LiveDbDisplayValueTuple(key=row.key, dataType=row.dataType,
+                                       rawValue=row.rawValue,
+                                       displayValue=row.displayValue)

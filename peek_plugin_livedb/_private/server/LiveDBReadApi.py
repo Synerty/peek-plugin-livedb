@@ -2,12 +2,13 @@ import logging
 from collections import defaultdict
 from typing import List, Optional
 
-from peek_plugin_base.storage.StorageUtil import makeCoreValuesSubqueryCondition
 from rx.subjects import Subject
 from sqlalchemy import select
 from twisted.internet.defer import Deferred
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
+from peek_plugin_base.storage.LoadPayloadPgUtil import getTuplesPayloadBlocking, \
+    LoadPayloadTupleResult
 from peek_plugin_livedb._private.server.controller.LiveDbController import \
     LiveDbController
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
@@ -72,10 +73,10 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 @deferToThreadWrapWithLogger(logger)
 def qryChunk(modelSetKey: str, offset: int, limit: int, keyList: List[str],
-             dbSessionCreator) -> List[LiveDbDisplayValueTuple]:
+             dbSessionCreator) -> LoadPayloadTupleResult:
     # If they've given us an empty key list, that is what they will get back
     if keyList is not None and not keyList:
-        return []
+        return None
 
     table = LiveDbItem.__table__
     cols = [table.c.key, table.c.dataType, table.c.rawValue, table.c.displayValue]
@@ -84,23 +85,21 @@ def qryChunk(modelSetKey: str, offset: int, limit: int, keyList: List[str],
     try:
         liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetKey)
 
-        stmt = (select(cols)
-                .order_by(table.c.id)
-                .where(table.c.modelSetId == liveDbModelSet.id))
+        sql = select(cols) \
+            .order_by(table.c.id) \
+            .where(table.c.modelSetId == liveDbModelSet.id)
 
         if keyList is not None:
-            stmt = stmt.where(makeCoreValuesSubqueryCondition(
-                session.bind, table.c.key, keyList
-            ))
+            sql = sql.where(table.c.key.in_(keyList))
 
-        stmt = stmt.offset(offset).limit(limit)
+        sql = sql.offset(offset).limit(limit)
 
-        result = session.execute(stmt)
-
-        return [LiveDbDisplayValueTuple(
-            key=o.key, dataType=o.dataType,
-            rawValue=o.rawValue, displayValue=o.displayValue) for o in result.fetchall()]
-
+        return getTuplesPayloadBlocking(
+            dbSessionCreator,
+            sql,
+            LiveDbDisplayValueTuple.sqlCoreLoad,
+            fetchSize=limit
+        )
 
     finally:
         session.close()

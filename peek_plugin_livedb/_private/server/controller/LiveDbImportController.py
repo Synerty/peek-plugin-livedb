@@ -1,11 +1,13 @@
 import logging
 from typing import List
 
+from twisted.internet.defer import Deferred, inlineCallbacks
+from vortex.Payload import Payload
+
 from peek_plugin_livedb._private.server.LiveDBReadApi import LiveDBReadApi
 from peek_plugin_livedb._private.worker.tasks.LiveDbItemImportTask import \
     importLiveDbItems
 from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
-from twisted.internet.defer import Deferred, inlineCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +50,15 @@ class LiveDbImportController:
             modelSetKey, keyList=newKeys)
         while True:
             d = next(deferredGenerator)
-            newTuplesChunk = yield d  # List[LiveDbDisplayValueTuple]
-            newTuples += newTuplesChunk
+            newTuplesEncodedPayload = yield d  # List[LiveDbDisplayValueTuple]
 
             # The end of the list is marked my an empty result
-            if not newTuplesChunk:
+            if not newTuplesEncodedPayload:
                 break
+
+            payload = yield Payload().fromEncodedPayloadDefer(newTuplesEncodedPayload)
+
+            newTuples += payload.tuples
 
         # If there are no tuples, do nothing
         if not newTuples:

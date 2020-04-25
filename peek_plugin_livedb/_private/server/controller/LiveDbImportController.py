@@ -50,13 +50,13 @@ class LiveDbImportController:
             modelSetKey, keyList=newKeys)
         while True:
             d = next(deferredGenerator)
-            newTuplesEncodedPayload = yield d  # List[LiveDbDisplayValueTuple]
+            result = yield d  # List[LiveDbDisplayValueTuple]
 
             # The end of the list is marked my an empty result
-            if not newTuplesEncodedPayload:
+            if not result.count:
                 break
 
-            payload = yield Payload().fromEncodedPayloadDefer(newTuplesEncodedPayload)
+            payload = yield Payload().fromEncodedPayloadDefer(result.encodedPayload)
 
             newTuples += payload.tuples
 

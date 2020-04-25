@@ -27,51 +27,15 @@ class LiveDbRawValueQueue(Tuple, DeclarativeBase,
 
     @classmethod
     def sqlCoreLoad(cls, row):
-        return LiveDbRawValueQueueTuple(row.id, row.modelSetId, row.key, row.rawValue)
+        return LiveDbRawValueQueue(id=row.id, modelSetId=row.modelSetId,
+                                   key=row.key, rawValue=row.rawValue)
 
+    @property
     def ckiUniqueKey(self):
         """ See LiveDbRawValueQueueTuple.ckiUniqueKey """
-        raise NotImplementedError()
+        return "%s:%s" % (self.modelSetId, self.key)
 
     __table_args__ = (
         Index("idx_LiveDbRawValueQueue_all", id, modelSetId, key, rawValue, unique=False),
     )
 
-
-@addTupleType
-class LiveDbRawValueQueueTuple(Tuple):
-    """ LiveDB Raw Value Queue Tuple
-
-    This Tuple is designed to be as fast as possible to serialise and access
-    as it's used heavily.
-
-    """
-    __tablename__ = 'LiveDbRawValueQueueSlots'
-    __tupleType__ = livedbTuplePrefix + __tablename__
-
-    __slots__ = ("data",)
-    __rawJonableFields__ = ("data",)
-
-    def __init__(self, id: int = None, modelSetId: int = None, key: str = None,
-                 rawValue: Optional[str] = None):
-        Tuple.__init__(self, data=(id, modelSetId, key, rawValue))
-
-    @property
-    def id(self) -> int:
-        return self.data[0]
-
-    @property
-    def modelSetId(self) -> int:
-        return self.data[1]
-
-    @property
-    def key(self) -> str:
-        return self.data[2]
-
-    @property
-    def rawValue(self) -> Optional[str]:
-        return self.data[3]
-
-    @property
-    def ckiUniqueKey(self):
-        return "%s:%s" % (self.modelSetId, self.key)

@@ -4,15 +4,15 @@ from datetime import datetime
 from typing import List, Dict
 
 import pytz
-from peek_plugin_base.worker import CeleryDbConn
-from peek_plugin_base.worker.CeleryApp import celeryApp
 from sqlalchemy.sql.expression import bindparam, and_, select
 from txcelery.defer import DeferrableTask
+from vortex.Payload import Payload
 
+from peek_plugin_base.worker import CeleryDbConn
+from peek_plugin_base.worker.CeleryApp import celeryApp
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import LiveDbModelSet
-from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue, \
-    LiveDbRawValueQueueTuple
+from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue
 from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
 
 logger = logging.getLogger(__name__)
@@ -20,16 +20,18 @@ logger = logging.getLogger(__name__)
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def updateValues(self, queueIds: List[int],
-                 allModelUpdates: List[LiveDbRawValueQueueTuple]) -> None:
+def updateValues(self, payloadEncodedArgs: bytes) -> None:
     """ Compile Grids Task
 
-    :param queueIds: The IDs of the items from the queue
     :param self: A celery reference to this task
-    :param allModelUpdates: The updates from the queue controller
+    :param payloadEncodedArgs: The updates from the queue controller
     :returns: None
     """
     startTime = datetime.now(pytz.utc)
+
+    argData = Payload().fromEncodedPayload(payloadEncodedArgs).tuples
+    allModelUpdates: List[LiveDbRawValueQueue] = argData[0]
+    queueItemIds = argData[1]
 
     # Group the data by model set
     updatesByModelSetId = defaultdict(list)
@@ -40,14 +42,13 @@ def updateValues(self, queueIds: List[int],
     try:
 
         for modelSetId, modelUpdates in updatesByModelSetId.items():
-            _updateValuesForModelSet(modelSetId, modelUpdates,
-                                     ormSession, queueIds)
+            _updateValuesForModelSet(modelSetId, modelUpdates, ormSession)
 
         # ---------------
         # delete the queue items
         dispQueueTable = LiveDbRawValueQueue.__table__
         ormSession.execute(
-            dispQueueTable.delete(dispQueueTable.c.id.in_(queueIds))
+            dispQueueTable.delete(dispQueueTable.c.id.in_(queueItemIds))
         )
 
         ormSession.commit()
@@ -66,8 +67,7 @@ def updateValues(self, queueIds: List[int],
         ormSession.close()
 
 
-def _updateValuesForModelSet(modelSetId, modelUpdates, ormSession,
-                             queueIds):
+def _updateValuesForModelSet(modelSetId, modelUpdates, ormSession):
     # Try to load the Diagram plugins API
     try:
         from peek_plugin_diagram.worker.WorkerApi import WorkerApi as DiagramWorkerApi

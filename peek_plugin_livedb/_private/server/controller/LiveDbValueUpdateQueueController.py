@@ -60,7 +60,7 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
         from peek_plugin_livedb._private.worker.tasks.LiveDbItemUpdateTask import \
             updateValues
 
-        return updateValues.delay(block.queueIds, block.items)
+        return updateValues.delay(block.itemsEncodedPayload)
 
     def _processWorkerResults(self, results):
         pass

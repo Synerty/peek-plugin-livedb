@@ -53,7 +53,7 @@ class LiveDbImportController:
             result = yield d  # List[LiveDbDisplayValueTuple]
 
             # The end of the list is marked my an empty result
-            if not result.count:
+            if not result or not result.count:
                 break
 
             payload = yield Payload().fromEncodedPayloadDefer(result.encodedPayload)

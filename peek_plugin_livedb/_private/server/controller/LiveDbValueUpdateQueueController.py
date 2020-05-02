@@ -9,6 +9,7 @@ from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import
     ACIProcessorQueueTupleABC
 from peek_plugin_livedb._private.server.controller.AdminStatusController import \
     AdminStatusController
+from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue
 from peek_plugin_livedb.tuples.LiveDbRawValueUpdateTuple import LiveDbRawValueUpdateTuple
@@ -49,6 +50,7 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
 
     _logger = logger
     _QueueDeclarative: ACIProcessorQueueTupleABC = LiveDbRawValueQueue
+    _VacuumDeclaratives = (LiveDbRawValueQueue, LiveDbItem)
 
     def __init__(self, ormSessionCreator, adminStatusController: AdminStatusController):
         ACIProcessorQueueControllerABC.__init__(self, ormSessionCreator,

@@ -1,5 +1,5 @@
 import {addTupleType, Tuple} from "@synerty/vortexjs";
-import {livedbTuplePrefix} from "@peek/peek_plugin_livedb/_private/PluginNames";
+import {livedbTuplePrefix} from "@_peek/peek_plugin_livedb/_private/PluginNames";
 
 
 @addTupleType

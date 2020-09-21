@@ -21,7 +21,7 @@ import {
     livedbFilt,
     livedbObservableName,
     livedbTupleOfflineServiceName
-} from "@peek/peek_plugin_livedb/_private";
+} from "@_peek/peek_plugin_livedb/_private";
 
 export function tupleActionPushNameServiceFactory() {
     return new TupleActionPushNameService(

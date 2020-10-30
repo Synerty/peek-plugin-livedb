@@ -9,7 +9,8 @@
         "website": "www.synerty.com"
     },
     "requiresServices": [
-        "client",
+        "field",
+        "office",
         "server",
         "storage",
         "admin",

@@ -17,16 +17,12 @@
         "agent",
         "worker",
         "doc-dev",
-        "doc-admin"
+        "admin-doc"
     ],
-    "doc-dev": {
-        "docDir": "doc-dev",
+    "admin-doc": {
+        "docDir": "admin-doc",
         "docRst": "index.rst",
         "hasApi": true
-    },
-    "doc-admin": {
-        "docDir": "doc-admin",
-        "docRst": "index.rst"
     },
     "logic": {
     },

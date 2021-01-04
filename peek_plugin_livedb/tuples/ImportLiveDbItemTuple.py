@@ -6,12 +6,13 @@ from vortex.Tuple import Tuple, addTupleType
 
 @addTupleType
 class ImportLiveDbItemTuple(Tuple):
-    """ Live DB Display Value Tuple
+    """Live DB Display Value Tuple
 
     This tuple stores a value of a key in the Live DB database.
 
     """
-    __tupleType__ = livedbTuplePrefix + 'ImportLiveDbItemTuple'
+
+    __tupleType__ = livedbTuplePrefix + "ImportLiveDbItemTuple"
     __slots__ = ("key", "dataType", "rawValue", "displayValue", "importHash")
 
     DATA_TYPE_NUMBER_VALUE = LiveDbItem.NUMBER_VALUE

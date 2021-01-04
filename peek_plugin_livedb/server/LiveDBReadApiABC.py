@@ -8,7 +8,7 @@ from twisted.internet.defer import Deferred
 class LiveDBReadApiABC(metaclass=ABCMeta):
     @abstractmethod
     def priorityKeysObservable(self, modelSetName: str) -> Subject:
-        """ Priority Live DB Key Observable
+        """Priority Live DB Key Observable
 
         This observable emits list of keys that the live db acquisition plugins should
         prioritised, these keys will be monitored until the next
@@ -25,7 +25,7 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
 
     @abstractmethod
     def pollKeysObservable(self, modelSetName: str) -> Subject:
-        """ Poll Live DB Key Observable
+        """Poll Live DB Key Observable
 
         This observable emits list of keys that the live db acquisition plugins should
         poll ONCE.
@@ -41,7 +41,7 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
 
     @abstractmethod
     def itemAdditionsObservable(self, modelSetName: str) -> Subject:
-        """ Live DB Tuple Added Items Observable
+        """Live DB Tuple Added Items Observable
 
         Return an observable that fires when livedb items are added
 
@@ -54,7 +54,7 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
 
     @abstractmethod
     def itemDeletionsObservable(self, modelSetName: str) -> Subject:
-        """ Live DB Tuple Removed Items Observable
+        """Live DB Tuple Removed Items Observable
 
         Return an observable that fires when livedb items are removed
 
@@ -66,10 +66,13 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def bulkLoadDeferredGenerator(self, modelSetName: str,
-                                  keyList: Optional[List[str]] = None,
-                                  chunkSize: int = 2500) -> Deferred:
-        """ Live DB Tuples
+    def bulkLoadDeferredGenerator(
+        self,
+        modelSetName: str,
+        keyList: Optional[List[str]] = None,
+        chunkSize: int = 2500,
+    ) -> Deferred:
+        """Live DB Tuples
 
         Return a generator that returns deferreds that are fired with chunks of the
          entire live db.
@@ -107,7 +110,7 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
 
     @abstractmethod
     def rawValueUpdatesObservable(self, modelSetName: str) -> Subject:
-        """ Raw Value Update Observable
+        """Raw Value Update Observable
 
         Return an observable that fires with lists of C{LiveDbRawValueTuple} tuples
         containing updates to live db values.
@@ -121,7 +124,7 @@ class LiveDBReadApiABC(metaclass=ABCMeta):
 
     @abstractmethod
     def displayValueUpdatesObservable(self, modelSetName: str) -> Subject:
-        """ Display Value Update Observable
+        """Display Value Update Observable
 
         Return an observable that fires with lists of C{LiveDbDisplayValueTuple} tuples
         containing updates to live db values.

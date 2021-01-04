@@ -8,7 +8,7 @@ from .DeclarativeBase import DeclarativeBase
 
 @addTupleType
 class LiveDbModelSet(Tuple, DeclarativeBase):
-    __tablename__ = 'LiveDbModelSet'
+    __tablename__ = "LiveDbModelSet"
     __tupleType__ = livedbTuplePrefix + __tablename__
 
     id = Column(Integer, primary_key=True, autoincrement=True)

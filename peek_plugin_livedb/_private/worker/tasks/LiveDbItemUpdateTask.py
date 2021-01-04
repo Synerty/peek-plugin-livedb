@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @DeferrableTask
 @celeryApp.task(bind=True)
 def updateValues(self, payloadEncodedArgs: bytes) -> None:
-    """ Compile Grids Task
+    """Compile Grids Task
 
     :param self: A celery reference to this task
     :param payloadEncodedArgs: The updates from the queue controller
@@ -47,17 +47,17 @@ def updateValues(self, payloadEncodedArgs: bytes) -> None:
         # ---------------
         # delete the queue items
         dispQueueTable = LiveDbRawValueQueue.__table__
-        ormSession.execute(
-            dispQueueTable.delete(dispQueueTable.c.id.in_(queueItemIds))
-        )
+        ormSession.execute(dispQueueTable.delete(dispQueueTable.c.id.in_(queueItemIds)))
 
         ormSession.commit()
 
         # ---------------
         # Finally, tell log some statistics
-        logger.info("Updated %s raw values in %s",
-                    len(allModelUpdates),
-                    (datetime.now(pytz.utc) - startTime))
+        logger.info(
+            "Updated %s raw values in %s",
+            len(allModelUpdates),
+            (datetime.now(pytz.utc) - startTime),
+        )
 
     except Exception as e:
         logger.exception(e)
@@ -78,74 +78,83 @@ def _updateValuesForModelSet(modelSetId, modelUpdates, ormSession):
     table = LiveDbItem.__table__
 
     # Load the Model Set
-    liveDbModelSet = ormSession.query(LiveDbModelSet) \
-        .filter(LiveDbModelSet.id == modelSetId) \
-        .one()
+    liveDbModelSet = (
+        ormSession.query(LiveDbModelSet).filter(LiveDbModelSet.id == modelSetId).one()
+    )
 
     # Create a list of keys
     updatedKeys = [i.key for i in modelUpdates]
 
     # ---------------
     # Make a list of display items from the provided data
-    displayItems = _makeDisplayValueTuples(liveDbModelSet, modelUpdates,
-                                           ormSession, updatedKeys)
+    displayItems = _makeDisplayValueTuples(
+        liveDbModelSet, modelUpdates, ormSession, updatedKeys
+    )
 
     # ---------------
     # Get the Diagram plugin to convert the live db values
     if DiagramWorkerApi:
         DiagramWorkerApi.updateLiveDbDisplayValues(
-            ormSession,
-            modelSetKey=liveDbModelSet.name,
-            liveDbRawValues=displayItems
+            ormSession, modelSetKey=liveDbModelSet.name, liveDbRawValues=displayItems
         )
 
     # ---------------
     # Update the the values in the tables
-    sql = (table.update()
-           .where(and_(table.c.key == bindparam('b_key'),
-                       table.c.modelSetId == liveDbModelSet.id))
-           .values({"rawValue": bindparam("b_rawValue"),
-                    "displayValue": bindparam("b_displayValue")}))
+    sql = (
+        table.update()
+        .where(
+            and_(
+                table.c.key == bindparam("b_key"),
+                table.c.modelSetId == liveDbModelSet.id,
+            )
+        )
+        .values(
+            {
+                "rawValue": bindparam("b_rawValue"),
+                "displayValue": bindparam("b_displayValue"),
+            }
+        )
+    )
 
-    ormSession.execute(sql, [
-        dict(b_key=o.key,
-             b_rawValue=o.rawValue,
-             b_displayValue=o.displayValue)
-        for o in displayItems])
+    ormSession.execute(
+        sql,
+        [
+            dict(b_key=o.key, b_rawValue=o.rawValue, b_displayValue=o.displayValue)
+            for o in displayItems
+        ],
+    )
 
     # ---------------
     # Tell the diagram plugin that livedb values have been updated
     if DiagramWorkerApi:
         DiagramWorkerApi.liveDbDisplayValueUpdateNotify(
-            ormSession,
-            modelSetKey=liveDbModelSet.key,
-            updatedKeys=updatedKeys
+            ormSession, modelSetKey=liveDbModelSet.key, updatedKeys=updatedKeys
         )
 
 
 def _makeDisplayValueTuples(liveDbModelSet, modelUpdates, ormSession, updatedKeys):
     # Load the key typ lookups
     dataTypeLookup = _getLiveDbKeyDatatypeDict(
-        ormSession,
-        liveDbModelSet,
-        liveDbKeys=updatedKeys
+        ormSession, liveDbModelSet, liveDbKeys=updatedKeys
     )
 
     displayItems = []
     for update in modelUpdates:
-        displayItems.append(LiveDbDisplayValueTuple(
-            key=update.key,
-            dataType=dataTypeLookup.get(update.key),
-            rawValue=update.rawValue
-        ))
+        displayItems.append(
+            LiveDbDisplayValueTuple(
+                key=update.key,
+                dataType=dataTypeLookup.get(update.key),
+                rawValue=update.rawValue,
+            )
+        )
 
     return displayItems
 
 
-def _getLiveDbKeyDatatypeDict(ormSession,
-                              liveDbModelSet: LiveDbModelSet,
-                              liveDbKeys: List[str]) -> Dict[str, int]:
-    """ Get Live DB DataTypes
+def _getLiveDbKeyDatatypeDict(
+    ormSession, liveDbModelSet: LiveDbModelSet, liveDbKeys: List[str]
+) -> Dict[str, int]:
+    """Get Live DB DataTypes
 
     Return an array of items representing the display values from the LiveDB.
 
@@ -162,12 +171,14 @@ def _getLiveDbKeyDatatypeDict(ormSession,
         return {}
 
     liveDbKeys = list(set(liveDbKeys))  # Remove duplicates if any exist.
-    stmt = select([liveDbTable.c.key, liveDbTable.c.dataType]) \
-        .select_from(liveDbTable
-                     .join(modelTable,
-                           liveDbTable.c.modelSetId == modelTable.c.id)) \
-        .where(modelTable.c.name == liveDbModelSet.name) \
+    stmt = (
+        select([liveDbTable.c.key, liveDbTable.c.dataType])
+        .select_from(
+            liveDbTable.join(modelTable, liveDbTable.c.modelSetId == modelTable.c.id)
+        )
+        .where(modelTable.c.name == liveDbModelSet.name)
         .where(liveDbTable.c.key.in_(liveDbKeys))
+    )
 
     resultSet = ormSession.execute(stmt)
     return dict(resultSet.fetchall())

@@ -1,9 +1,9 @@
 import logging
 
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusControllerABC import \
-    ACIProcessorStatusControllerABC
-from peek_plugin_livedb._private.tuples.AdminStatusTuple import \
-    AdminStatusTuple
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusControllerABC import (
+    ACIProcessorStatusControllerABC,
+)
+from peek_plugin_livedb._private.tuples.AdminStatusTuple import AdminStatusTuple
 
 logger = logging.getLogger(__name__)
 

@@ -3,8 +3,11 @@ import logging
 from peek_plugin_base.worker.PluginWorkerEntryHookABC import PluginWorkerEntryHookABC
 from peek_plugin_livedb._private.storage.DeclarativeBase import loadStorageTuples
 from peek_plugin_livedb._private.tuples import loadPrivateTuples
-from peek_plugin_livedb._private.worker.tasks import LiveDbItemImportTask, \
-    LiveDbItemUpdateTask, BulkLoadChunkTask
+from peek_plugin_livedb._private.worker.tasks import (
+    LiveDbItemImportTask,
+    LiveDbItemUpdateTask,
+    BulkLoadChunkTask,
+)
 from peek_plugin_livedb.tuples import loadPublicTuples
 
 logger = logging.getLogger(__name__)
@@ -29,7 +32,8 @@ class WorkerEntryHook(PluginWorkerEntryHookABC):
 
     @property
     def celeryAppIncludes(self):
-        return [LiveDbItemImportTask.__name__,
-                LiveDbItemUpdateTask.__name__,
-                BulkLoadChunkTask.__name__]
-
+        return [
+            LiveDbItemImportTask.__name__,
+            LiveDbItemUpdateTask.__name__,
+            BulkLoadChunkTask.__name__,
+        ]

@@ -1,11 +1,11 @@
-import {CommonModule} from "@angular/common";
-import {FormsModule} from "@angular/forms";
-import {NgModule} from "@angular/core";
-import {RouterModule, Routes} from "@angular/router";
-import {EditSettingComponent} from "./edit-setting-table/edit.component";
+import { CommonModule } from "@angular/common"
+import { FormsModule } from "@angular/forms"
+import { NgModule } from "@angular/core"
+import { RouterModule, Routes } from "@angular/router"
+import { EditSettingComponent } from "./edit-setting-table/edit.component"
 // Import our components
-import {LiveDBComponent} from "./livedb.component";
-import {StatusComponent} from "./status/status.component";
+import { LiveDBComponent } from "./livedb.component"
+import { StatusComponent } from "./status/status.component"
 import {
     TupleActionPushNameService,
     TupleActionPushService,
@@ -14,37 +14,37 @@ import {
     TupleOfflineStorageNameService,
     TupleOfflineStorageService,
     TupleDataOfflineObserverService
-} from "@synerty/vortexjs";
+} from "@synerty/vortexjs"
 
 import {
     livedbActionProcessorName,
     livedbFilt,
     livedbObservableName,
     livedbTupleOfflineServiceName
-} from "@peek/peek_plugin_livedb/_private";
+} from "@peek/peek_plugin_livedb/_private"
 
 export function tupleActionPushNameServiceFactory() {
     return new TupleActionPushNameService(
-        livedbActionProcessorName, livedbFilt);
+        livedbActionProcessorName, livedbFilt)
 }
 
 export function tupleDataObservableNameServiceFactory() {
     return new TupleDataObservableNameService(
-        livedbObservableName, livedbFilt);
+        livedbObservableName, livedbFilt)
 }
 
 export function tupleOfflineStorageNameServiceFactory() {
-    return new TupleOfflineStorageNameService(livedbTupleOfflineServiceName);
+    return new TupleOfflineStorageNameService(livedbTupleOfflineServiceName)
 }
 
 // Define the routes for this Angular module
 export const pluginRoutes: Routes = [
     {
-        path: '',
+        path: "",
         component: LiveDBComponent
     }
 
-];
+]
 
 // Define the module
 @NgModule({

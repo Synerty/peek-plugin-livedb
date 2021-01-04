@@ -2,10 +2,13 @@ import logging
 from collections import defaultdict
 from typing import List, Optional
 
-from peek_plugin_base.storage.LoadPayloadPgUtil import getTuplesPayloadBlocking, \
-    LoadPayloadTupleResult
-from peek_plugin_livedb._private.server.controller.LiveDbController import \
-    LiveDbController
+from peek_plugin_base.storage.LoadPayloadPgUtil import (
+    getTuplesPayloadBlocking,
+    LoadPayloadTupleResult,
+)
+from peek_plugin_livedb._private.server.controller.LiveDbController import (
+    LiveDbController,
+)
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb.server.LiveDBReadApiABC import LiveDBReadApiABC
@@ -19,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 
 class LiveDBReadApi(LiveDBReadApiABC):
-
     def __init__(self):
         self._liveDbController = None
         self._dbSessionCreator = None
@@ -32,9 +34,7 @@ class LiveDBReadApi(LiveDBReadApiABC):
         self._rawValueUpdatesSubject = defaultdict(Subject)
         self._displayValueUpdatesSubject = defaultdict(Subject)
 
-    def setup(self, liveDbController: LiveDbController,
-              dbSessionCreator,
-              dbEngine):
+    def setup(self, liveDbController: LiveDbController, dbSessionCreator, dbEngine):
         self._liveDbController = liveDbController
         self._dbSessionCreator = dbSessionCreator
         self._dbEngine = dbEngine
@@ -54,9 +54,12 @@ class LiveDBReadApi(LiveDBReadApiABC):
     def itemDeletionsObservable(self, modelSetName: str) -> Subject:
         return self._deletionsSubject[modelSetName]
 
-    def bulkLoadDeferredGenerator(self, modelSetName: str,
-                                  keyList: Optional[List[str]] = None,
-                                  chunkSize: int = 2500) -> Deferred:
+    def bulkLoadDeferredGenerator(
+        self,
+        modelSetName: str,
+        keyList: Optional[List[str]] = None,
+        chunkSize: int = 2500,
+    ) -> Deferred:
         offset = 0
         limit = chunkSize
         while True:
@@ -72,8 +75,9 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 
 @deferToThreadWrapWithLogger(logger)
-def qryChunk(modelSetKey: str, offset: int, limit: int, keyList: List[str],
-             dbSessionCreator) -> LoadPayloadTupleResult:
+def qryChunk(
+    modelSetKey: str, offset: int, limit: int, keyList: List[str], dbSessionCreator
+) -> LoadPayloadTupleResult:
     # If they've given us an empty key list, that is what they will get back
     if keyList is not None and not keyList:
         return LoadPayloadTupleResult(encodedPayload=None, count=0)
@@ -85,9 +89,11 @@ def qryChunk(modelSetKey: str, offset: int, limit: int, keyList: List[str],
     try:
         liveDbModelSet = getOrCreateLiveDbModelSet(session, modelSetKey)
 
-        sql = select(cols) \
-            .order_by(table.c.id) \
+        sql = (
+            select(cols)
+            .order_by(table.c.id)
             .where(table.c.modelSetId == liveDbModelSet.id)
+        )
 
         if keyList is not None:
             sql = sql.where(table.c.key.in_(keyList))
@@ -95,10 +101,7 @@ def qryChunk(modelSetKey: str, offset: int, limit: int, keyList: List[str],
         sql = sql.offset(offset).limit(limit)
 
         return getTuplesPayloadBlocking(
-            dbSessionCreator,
-            sql,
-            LiveDbDisplayValueTuple.sqlCoreLoad,
-            fetchSize=limit
+            dbSessionCreator, sql, LiveDbDisplayValueTuple.sqlCoreLoad, fetchSize=limit
         )
 
     finally:

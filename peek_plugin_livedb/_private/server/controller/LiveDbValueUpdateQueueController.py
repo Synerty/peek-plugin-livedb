@@ -1,18 +1,25 @@
 import logging
 from typing import List
 
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorQueueControllerABC import \
-    ACIProcessorQueueControllerABC, ACIProcessorQueueBlockItem
-from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusNotifierABC import \
-    ACIProcessorStatusNotifierABC
-from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import \
-    ACIProcessorQueueTupleABC
-from peek_plugin_livedb._private.server.controller.AdminStatusController import \
-    AdminStatusController
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorQueueControllerABC import (
+    ACIProcessorQueueControllerABC,
+    ACIProcessorQueueBlockItem,
+)
+from peek_abstract_chunked_index.private.server.controller.ACIProcessorStatusNotifierABC import (
+    ACIProcessorStatusNotifierABC,
+)
+from peek_abstract_chunked_index.private.tuples.ACIProcessorQueueTupleABC import (
+    ACIProcessorQueueTupleABC,
+)
+from peek_plugin_livedb._private.server.controller.AdminStatusController import (
+    AdminStatusController,
+)
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
 from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
 from peek_plugin_livedb._private.storage.LiveDbRawValueQueue import LiveDbRawValueQueue
-from peek_plugin_livedb.tuples.LiveDbRawValueUpdateTuple import LiveDbRawValueUpdateTuple
+from peek_plugin_livedb.tuples.LiveDbRawValueUpdateTuple import (
+    LiveDbRawValueUpdateTuple,
+)
 from vortex.DeferUtil import deferToThreadWrapWithLogger
 
 logger = logging.getLogger(__name__)
@@ -53,14 +60,16 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
     _VacuumDeclaratives = (LiveDbRawValueQueue, LiveDbItem)
 
     def __init__(self, ormSessionCreator, adminStatusController: AdminStatusController):
-        ACIProcessorQueueControllerABC.__init__(self, ormSessionCreator,
-                                                _Notifier(adminStatusController))
+        ACIProcessorQueueControllerABC.__init__(
+            self, ormSessionCreator, _Notifier(adminStatusController)
+        )
 
         self._modelSetIdByKey = {}
 
     def _sendToWorker(self, block: ACIProcessorQueueBlockItem):
-        from peek_plugin_livedb._private.worker.tasks.LiveDbItemUpdateTask import \
-            updateValues
+        from peek_plugin_livedb._private.worker.tasks.LiveDbItemUpdateTask import (
+            updateValues,
+        )
 
         return updateValues.delay(block.itemsEncodedPayload)
 
@@ -71,13 +80,13 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
     # Deduplicate method
 
     def _dedupeQueueSql(self, lastFetchedId: int, dedupeLimit: int):
-        """ Deduplicate Queue
+        """Deduplicate Queue
 
         NOTE: In this SQL, we take the last value added to the queue, as it will have
         the latest value.
 
         """
-        return '''
+        return """
                  with sq_raw as (
                     SELECT "id", "modelSetId", "key"
                     FROM pl_livedb."LiveDbRawValueQueue"
@@ -99,14 +108,16 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
                     AND pl_livedb."LiveDbRawValueQueue"."modelSetId" = sq1."modelSetId"
                     AND pl_livedb."LiveDbRawValueQueue"."key" = sq1."key"
                     
-            ''' % {'id': lastFetchedId, 'limit': dedupeLimit}
+            """ % {
+            "id": lastFetchedId,
+            "limit": dedupeLimit,
+        }
 
     # ---------------
     # Insert into Queue methods
 
     @deferToThreadWrapWithLogger(logger)
-    def queueData(self, modelSetKey: str,
-                  updates: List[LiveDbRawValueUpdateTuple]):
+    def queueData(self, modelSetKey: str, updates: List[LiveDbRawValueUpdateTuple]):
         if not updates:
             return
 
@@ -115,16 +126,20 @@ class LiveDbValueUpdateQueueController(ACIProcessorQueueControllerABC):
             logger.debug("Queueing %s raw values for compile", len(updates))
 
             if modelSetKey not in self._modelSetIdByKey:
-                modelSet = getOrCreateLiveDbModelSet(ormSession, modelSetKey=modelSetKey)
+                modelSet = getOrCreateLiveDbModelSet(
+                    ormSession, modelSetKey=modelSetKey
+                )
                 self._modelSetIdByKey[modelSet.key] = modelSet.id
 
             modelSetId = self._modelSetIdByKey[modelSetKey]
 
             inserts = []
             for update in updates:
-                inserts.append(dict(modelSetId=modelSetId,
-                                    key=update.key,
-                                    rawValue=update.rawValue))
+                inserts.append(
+                    dict(
+                        modelSetId=modelSetId, key=update.key, rawValue=update.rawValue
+                    )
+                )
 
             ormSession.execute(LiveDbRawValueQueue.__table__.insert(), inserts)
             ormSession.commit()

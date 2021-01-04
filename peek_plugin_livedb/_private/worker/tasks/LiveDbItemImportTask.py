@@ -18,9 +18,10 @@ logger = logging.getLogger(__name__)
 
 @DeferrableTask
 @celeryApp.task(bind=True)
-def importLiveDbItems(self, modelSetKey: str,
-                      newItems: List[ImportLiveDbItemTuple]) -> List[str]:
-    """ Compile Grids Task
+def importLiveDbItems(
+    self, modelSetKey: str, newItems: List[ImportLiveDbItemTuple]
+) -> List[str]:
+    """Compile Grids Task
 
     :param self: A celery reference to this task
     :param modelSetKey: The model set name
@@ -50,15 +51,16 @@ def importLiveDbItems(self, modelSetKey: str,
         chunkSize = 1000
         offset = 0
         while True:
-            chunk = allKeys[offset:offset + chunkSize]
+            chunk = allKeys[offset : offset + chunkSize]
             if not chunk:
                 break
             offset += chunkSize
-            stmt = (select([liveDbTable.c.key])
-                    .where(liveDbTable.c.modelSetId == liveDbModelSet.id)
-            .where(makeCoreValuesSubqueryCondition(
-                engine, liveDbTable.c.key, chunk
-            ))
+            stmt = (
+                select([liveDbTable.c.key])
+                .where(liveDbTable.c.modelSetId == liveDbModelSet.id)
+                .where(
+                    makeCoreValuesSubqueryCondition(engine, liveDbTable.c.key, chunk)
+                )
             )
 
             result = conn.execute(stmt)
@@ -72,14 +74,16 @@ def importLiveDbItems(self, modelSetKey: str,
             if newItem.key in existingKeys:
                 continue
 
-            inserts.append(dict(
-                modelSetId=liveDbModelSet.id,
-                key=newItem.key,
-                dataType=newItem.dataType,
-                rawValue=newItem.rawValue,
-                displayValue=newItem.displayValue,
-                importHash=newItem.importHash
-            ))
+            inserts.append(
+                dict(
+                    modelSetId=liveDbModelSet.id,
+                    key=newItem.key,
+                    dataType=newItem.dataType,
+                    rawValue=newItem.rawValue,
+                    displayValue=newItem.displayValue,
+                    importHash=newItem.importHash,
+                )
+            )
 
             newKeys.append(newItem.key)
 
@@ -89,8 +93,12 @@ def importLiveDbItems(self, modelSetKey: str,
         conn.execute(LiveDbItem.__table__.insert(), inserts)
 
         transaction.commit()
-        logger.info("Inserted %s LiveDbItems, %s already existed, in %s",
-                    len(inserts), len(existingKeys), (datetime.now(pytz.utc) - startTime))
+        logger.info(
+            "Inserted %s LiveDbItems, %s already existed, in %s",
+            len(inserts),
+            len(existingKeys),
+            (datetime.now(pytz.utc) - startTime),
+        )
 
         return newKeys
 

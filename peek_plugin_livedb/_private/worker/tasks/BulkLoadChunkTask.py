@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @DeferrableTask
 @celeryApp.task(bind=True)
 def qryChunkInWorker(self, offset, limit) -> List[LiveDbDisplayValueTuple]:
-    """ Query Chunk
+    """Query Chunk
 
     This returns a chunk of LiveDB items from the database
 
@@ -30,14 +30,19 @@ def qryChunkInWorker(self, offset, limit) -> List[LiveDbDisplayValueTuple]:
 
     session = CeleryDbConn.getDbSession()
     try:
-        result = session.execute(select(cols)
-                                 .order_by(table.c.id)
-                                 .offset(offset)
-                                 .limit(limit))
+        result = session.execute(
+            select(cols).order_by(table.c.id).offset(offset).limit(limit)
+        )
 
-        return [LiveDbDisplayValueTuple(
-            key=o.key, dataType=o.dataType,
-            rawValue=o.rawValue, displayValue=o.displayValue) for o in result.fetchall()]
+        return [
+            LiveDbDisplayValueTuple(
+                key=o.key,
+                dataType=o.dataType,
+                rawValue=o.rawValue,
+                displayValue=o.displayValue,
+            )
+            for o in result.fetchall()
+        ]
 
     finally:
         session.close()

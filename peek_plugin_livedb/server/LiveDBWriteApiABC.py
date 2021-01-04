@@ -4,16 +4,20 @@ from abc import ABCMeta, abstractmethod
 from twisted.internet.defer import Deferred
 
 from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
-from peek_plugin_livedb.tuples.LiveDbDisplayValueUpdateTuple import \
-    LiveDbDisplayValueUpdateTuple
-from peek_plugin_livedb.tuples.LiveDbRawValueUpdateTuple import LiveDbRawValueUpdateTuple
+from peek_plugin_livedb.tuples.LiveDbDisplayValueUpdateTuple import (
+    LiveDbDisplayValueUpdateTuple,
+)
+from peek_plugin_livedb.tuples.LiveDbRawValueUpdateTuple import (
+    LiveDbRawValueUpdateTuple,
+)
 
 
 class LiveDBWriteApiABC(metaclass=ABCMeta):
     @abstractmethod
-    def updateRawValues(self, modelSetName: str,
-                        updates: List[LiveDbRawValueUpdateTuple]) -> Deferred:
-        """ Process Live DB Raw Value Updates
+    def updateRawValues(
+        self, modelSetName: str, updates: List[LiveDbRawValueUpdateTuple]
+    ) -> Deferred:
+        """Process Live DB Raw Value Updates
 
         Tells the live db that values have updated in the field, or wherever.
 
@@ -26,9 +30,10 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def importLiveDbItems(self, modelSetName: str,
-                          newItems: List[ImportLiveDbItemTuple]) -> Deferred:
-        """ Import LiveDB Items
+    def importLiveDbItems(
+        self, modelSetName: str, newItems: List[ImportLiveDbItemTuple]
+    ) -> Deferred:
+        """Import LiveDB Items
 
         Create new Live DB Items with Raw + Display values
 
@@ -43,9 +48,10 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def prioritiseLiveDbValueAcquisition(self, modelSetName: str,
-                                         liveDbKeys: List[str]) -> Deferred:
-        """ Prioritise LiveDB Value Acquisitions
+    def prioritiseLiveDbValueAcquisition(
+        self, modelSetName: str, liveDbKeys: List[str]
+    ) -> Deferred:
+        """Prioritise LiveDB Value Acquisitions
 
         When this method was first created, it was used for the diagram to tell the
         RealTime agent which keys to update as they were viewed by the user.
@@ -59,9 +65,10 @@ class LiveDBWriteApiABC(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def pollLiveDbValueAcquisition(self, modelSetName: str,
-                                         liveDbKeys: List[str]) -> Deferred:
-        """ Poll LiveDB Value Acquisitions
+    def pollLiveDbValueAcquisition(
+        self, modelSetName: str, liveDbKeys: List[str]
+    ) -> Deferred:
+        """Poll LiveDB Value Acquisitions
 
         Tell the LiveDB plugin the liveDbKeys must be polled.
 

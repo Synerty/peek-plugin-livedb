@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 @addTupleType
 class LiveDbItem(Tuple, DeclarativeBase):
-    __tupleTypeShort__ = 'LDK'
-    __tablename__ = 'LiveDbItem'
+    __tupleTypeShort__ = "LDK"
+    __tablename__ = "LiveDbItem"
     __tupleType__ = livedbTuplePrefix + __tablename__
 
     NUMBER_VALUE = 0
@@ -27,14 +27,25 @@ class LiveDbItem(Tuple, DeclarativeBase):
     LINE_STYLE = 4
     GROUP_PTR = 5
 
-    id_seq = Sequence('LiveDbItem_id_seq',
-                      metadata=DeclarativeBase.metadata,
-                      schema=DeclarativeBase.metadata.schema)
-    id = Column(Integer, id_seq, server_default=id_seq.next_value(),
-                primary_key=True, autoincrement=False)
+    id_seq = Sequence(
+        "LiveDbItem_id_seq",
+        metadata=DeclarativeBase.metadata,
+        schema=DeclarativeBase.metadata.schema,
+    )
+    id = Column(
+        Integer,
+        id_seq,
+        server_default=id_seq.next_value(),
+        primary_key=True,
+        autoincrement=False,
+    )
 
-    modelSetId = Column(Integer, ForeignKey('LiveDbModelSet.id', ondelete='CASCADE'),
-                        doc=JSON_EXCLUDE, nullable=False)
+    modelSetId = Column(
+        Integer,
+        ForeignKey("LiveDbModelSet.id", ondelete="CASCADE"),
+        doc=JSON_EXCLUDE,
+        nullable=False,
+    )
     modelSet = relationship(LiveDbModelSet)
 
     # comment="The unique reference of the value we want from the live db"
@@ -58,4 +69,3 @@ class LiveDbItem(Tuple, DeclarativeBase):
         Index("idx_LiveDbDKey_importHash", importHash, unique=False),
         Index("idx_LiveDbDKey_modelSet_key", modelSetId, key, unique=True),
     )
-

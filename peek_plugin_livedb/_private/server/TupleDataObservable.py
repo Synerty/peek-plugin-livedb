@@ -1,18 +1,20 @@
-from peek_plugin_livedb._private.tuples.AdminStatusTuple import \
-    AdminStatusTuple
+from peek_plugin_livedb._private.tuples.AdminStatusTuple import AdminStatusTuple
 from vortex.handler.TupleDataObservableHandler import TupleDataObservableHandler
 
 from peek_plugin_livedb._private.PluginNames import livedbFilt
 from peek_plugin_livedb._private.PluginNames import livedbObservableName
-from peek_plugin_livedb._private.server.controller.AdminStatusController import \
-    AdminStatusController
-from peek_plugin_livedb._private.server.tuple_providers.AdminStatusTupleProvider import \
-    AdminStatusTupleProvider
+from peek_plugin_livedb._private.server.controller.AdminStatusController import (
+    AdminStatusController,
+)
+from peek_plugin_livedb._private.server.tuple_providers.AdminStatusTupleProvider import (
+    AdminStatusTupleProvider,
+)
 
 
-def makeTupleDataObservableHandler(ormSessionCreator,
-                                   adminStatusController: AdminStatusController):
-    """" Make Tuple Data Observable Handler
+def makeTupleDataObservableHandler(
+    ormSessionCreator, adminStatusController: AdminStatusController
+):
+    """ " Make Tuple Data Observable Handler
 
     This method creates the observable object, registers the tuple providers and then
     returns it.
@@ -24,10 +26,11 @@ def makeTupleDataObservableHandler(ormSessionCreator,
 
     """
     tupleObservable = TupleDataObservableHandler(
-        observableName=livedbObservableName,
-        additionalFilt=livedbFilt)
+        observableName=livedbObservableName, additionalFilt=livedbFilt
+    )
 
     # # Register TupleProviders here
-    tupleObservable.addTupleProvider(AdminStatusTuple.tupleName(),
-                                     AdminStatusTupleProvider(adminStatusController))
+    tupleObservable.addTupleProvider(
+        AdminStatusTuple.tupleName(), AdminStatusTupleProvider(adminStatusController)
+    )
     return tupleObservable

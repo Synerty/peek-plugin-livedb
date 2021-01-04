@@ -5,16 +5,16 @@ from twisted.internet.defer import Deferred, inlineCallbacks
 from vortex.Payload import Payload
 
 from peek_plugin_livedb._private.server.LiveDBReadApi import LiveDBReadApi
-from peek_plugin_livedb._private.worker.tasks.LiveDbItemImportTask import \
-    importLiveDbItems
+from peek_plugin_livedb._private.worker.tasks.LiveDbItemImportTask import (
+    importLiveDbItems,
+)
 from peek_plugin_livedb.tuples.ImportLiveDbItemTuple import ImportLiveDbItemTuple
 
 logger = logging.getLogger(__name__)
 
 
 class LiveDbImportController:
-    """ LiveDB Import Controller
-    """
+    """LiveDB Import Controller"""
 
     def __init__(self, dbSessionCreator):
         self._dbSessionCreator = dbSessionCreator
@@ -26,9 +26,10 @@ class LiveDbImportController:
         self._readApi = None
 
     @inlineCallbacks
-    def importLiveDbItems(self, modelSetKey: str,
-                          newItems: List[ImportLiveDbItemTuple]) -> Deferred:
-        """ Import Live DB Items
+    def importLiveDbItems(
+        self, modelSetKey: str, newItems: List[ImportLiveDbItemTuple]
+    ) -> Deferred:
+        """Import Live DB Items
 
         1) set the  coordSetId
 
@@ -40,14 +41,14 @@ class LiveDbImportController:
         """
 
         newKeys = yield importLiveDbItems.delay(
-            modelSetKey=modelSetKey,
-            newItems=newItems
+            modelSetKey=modelSetKey, newItems=newItems
         )
 
         newTuples = []
 
         deferredGenerator = self._readApi.bulkLoadDeferredGenerator(
-            modelSetKey, keyList=newKeys)
+            modelSetKey, keyList=newKeys
+        )
         while True:
             d = next(deferredGenerator)
             result = yield d  # List[LiveDbDisplayValueTuple]

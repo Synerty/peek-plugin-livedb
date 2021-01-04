@@ -1,7 +1,13 @@
 import { Component } from "@angular/core"
-import { BalloonMsgService, NgLifeCycleEvents } from "@synerty/peek-plugin-base-js"
+import {
+    BalloonMsgService,
+    NgLifeCycleEvents
+} from "@synerty/peek-plugin-base-js"
 import { extend, TupleLoader, VortexService } from "@synerty/vortexjs"
-import { livedbFilt, SettingPropertyTuple } from "@peek/peek_plugin_livedb/_private"
+import {
+    livedbFilt,
+    SettingPropertyTuple
+} from "@peek/peek_plugin_livedb/_private"
 
 @Component({
     selector: "pl-livedb-edit-setting",

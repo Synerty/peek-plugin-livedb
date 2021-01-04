@@ -8,7 +8,7 @@ class LiveDBApiABC(metaclass=ABCMeta):
     @property
     @abstractmethod
     def writeApi(self) -> LiveDBWriteApiABC:
-        """ LiveDB Write API
+        """LiveDB Write API
 
         This API is for all the methods that make changes to the LiveDB
 
@@ -19,7 +19,7 @@ class LiveDBApiABC(metaclass=ABCMeta):
     @property
     @abstractmethod
     def readApi(self) -> LiveDBReadApiABC:
-        """ LiveDB Read API
+        """LiveDB Read API
 
         This API is for all the methods to read changes from the LiveDB
 

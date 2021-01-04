@@ -9,5 +9,6 @@ def makeTupleActionProcessorHandler(mainController: MainController):
     processor = TupleActionProcessor(
         tupleActionProcessorName=livedbActionProcessorName,
         additionalFilt=livedbFilt,
-        defaultDelegate=mainController)
+        defaultDelegate=mainController,
+    )
     return processor

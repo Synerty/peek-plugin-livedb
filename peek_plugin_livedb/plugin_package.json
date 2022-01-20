@@ -24,8 +24,7 @@
         "docRst": "index.rst",
         "hasApi": true
     },
-    "logic": {
-    },
+    "logic": {},
     "storage": {
         "alembicDir": "_private/alembic"
     },
@@ -35,8 +34,6 @@
         "appModule": "livedb.module#LiveDBModule",
         "moduleDir": "plugin-module"
     },
-    "agent": {
-    },
-    "worker": {
-    }
+    "agent": {},
+    "worker": {}
 }

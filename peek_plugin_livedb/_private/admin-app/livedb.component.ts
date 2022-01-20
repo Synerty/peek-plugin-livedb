@@ -1,12 +1,9 @@
-import { Component, OnInit } from "@angular/core"
+import { Component, OnInit } from "@angular/core";
 
 @Component({
     selector: "livedb-admin",
-    templateUrl: "livedb.component.html"
+    templateUrl: "livedb.component.html",
 })
 export class LiveDBComponent implements OnInit {
-    
-    ngOnInit() {
-    
-    }
+    ngOnInit() {}
 }

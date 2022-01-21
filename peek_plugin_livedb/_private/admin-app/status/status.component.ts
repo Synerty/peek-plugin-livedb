@@ -1,8 +1,9 @@
+import { takeUntil } from "rxjs/operators";
 import { Component } from "@angular/core";
 import {
     NgLifeCycleEvents,
     TupleDataObserverService,
-    TupleSelector
+    TupleSelector,
 } from "@synerty/vortexjs";
 import { BalloonMsgService } from "@synerty/peek-plugin-base-js";
 import { AdminStatusTuple } from "../tuples/AdminStatusTuple";
@@ -23,7 +24,7 @@ export class StatusComponent extends NgLifeCycleEvents {
         let ts = new TupleSelector(AdminStatusTuple.tupleName, {});
         this.tupleObserver
             .subscribeToTupleSelector(ts)
-            .takeUntil(this.onDestroyEvent)
+            .pipe(takeUntil(this.onDestroyEvent))
             .subscribe((tuples: AdminStatusTuple[]) => (this.item = tuples[0]));
     }
 }

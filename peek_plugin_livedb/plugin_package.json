@@ -35,5 +35,11 @@
         "moduleDir": "plugin-module"
     },
     "agent": {},
-    "worker": {}
+    "worker": {},
+    "field" : {
+        "subprocessGroup": "livedb+diagram"
+    },
+    "office" : {
+        "subprocessGroup": "livedb+diagram"
+    }
 }

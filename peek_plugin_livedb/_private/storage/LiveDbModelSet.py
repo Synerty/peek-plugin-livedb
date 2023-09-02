@@ -7,7 +7,7 @@ from .DeclarativeBase import DeclarativeBase
 
 
 @addTupleType
-class LiveDbModelSet(Tuple, DeclarativeBase):
+class LiveDbModelSet(DeclarativeBase, Tuple):
     __tablename__ = "LiveDbModelSet"
     __tupleType__ = livedbTuplePrefix + __tablename__
 

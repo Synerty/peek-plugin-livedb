@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @addTupleType
-class LiveDbItem(Tuple, DeclarativeBase):
+class LiveDbItem(DeclarativeBase, Tuple):
     __tupleTypeShort__ = "LDK"
     __tablename__ = "LiveDbItem"
     __tupleType__ = livedbTuplePrefix + __tablename__

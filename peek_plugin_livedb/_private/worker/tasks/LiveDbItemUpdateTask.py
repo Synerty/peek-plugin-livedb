@@ -172,7 +172,7 @@ def _getLiveDbKeyDatatypeDict(
 
     liveDbKeys = list(set(liveDbKeys))  # Remove duplicates if any exist.
     stmt = (
-        select([liveDbTable.c.key, liveDbTable.c.dataType])
+        select(liveDbTable.c.key, liveDbTable.c.dataType)
         .select_from(
             liveDbTable.join(modelTable, liveDbTable.c.modelSetId == modelTable.c.id)
         )

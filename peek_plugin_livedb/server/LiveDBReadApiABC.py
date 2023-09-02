@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional, List
 
-from rx.subjects import Subject
+from reactivex.subject import Subject
 from twisted.internet.defer import Deferred
 
 

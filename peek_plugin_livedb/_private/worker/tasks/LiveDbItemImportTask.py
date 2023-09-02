@@ -56,7 +56,7 @@ def importLiveDbItems(
                 break
             offset += chunkSize
             stmt = (
-                select([liveDbTable.c.key])
+                select(liveDbTable.c.key)
                 .where(liveDbTable.c.modelSetId == liveDbModelSet.id)
                 .where(
                     makeCoreValuesSubqueryCondition(engine, liveDbTable.c.key, chunk)

@@ -10,10 +10,14 @@ from peek_plugin_livedb._private.server.controller.LiveDbController import (
     LiveDbController,
 )
 from peek_plugin_livedb._private.storage.LiveDbItem import LiveDbItem
-from peek_plugin_livedb._private.storage.LiveDbModelSet import getOrCreateLiveDbModelSet
+from peek_plugin_livedb._private.storage.LiveDbModelSet import (
+    getOrCreateLiveDbModelSet,
+)
 from peek_plugin_livedb.server.LiveDBReadApiABC import LiveDBReadApiABC
-from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import LiveDbDisplayValueTuple
-from rx.subjects import Subject
+from peek_plugin_livedb.tuples.LiveDbDisplayValueTuple import (
+    LiveDbDisplayValueTuple,
+)
+from reactivex.subject import Subject
 from sqlalchemy import select
 from twisted.internet.defer import Deferred
 from vortex.DeferUtil import deferToThreadWrapWithLogger
@@ -34,7 +38,9 @@ class LiveDBReadApi(LiveDBReadApiABC):
         self._rawValueUpdatesSubject = defaultdict(Subject)
         self._displayValueUpdatesSubject = defaultdict(Subject)
 
-    def setup(self, liveDbController: LiveDbController, dbSessionCreator, dbEngine):
+    def setup(
+        self, liveDbController: LiveDbController, dbSessionCreator, dbEngine
+    ):
         self._liveDbController = liveDbController
         self._dbSessionCreator = dbSessionCreator
         self._dbEngine = dbEngine
@@ -63,7 +69,9 @@ class LiveDBReadApi(LiveDBReadApiABC):
         offset = 0
         limit = chunkSize
         while True:
-            yield qryChunk(modelSetName, offset, limit, keyList, self._dbSessionCreator)
+            yield qryChunk(
+                modelSetName, offset, limit, keyList, self._dbSessionCreator
+            )
 
             offset += limit
 
@@ -76,14 +84,23 @@ class LiveDBReadApi(LiveDBReadApiABC):
 
 @deferToThreadWrapWithLogger(logger)
 def qryChunk(
-    modelSetKey: str, offset: int, limit: int, keyList: List[str], dbSessionCreator
+    modelSetKey: str,
+    offset: int,
+    limit: int,
+    keyList: List[str],
+    dbSessionCreator,
 ) -> LoadPayloadTupleResult:
     # If they've given us an empty key list, that is what they will get back
     if keyList is not None and not keyList:
         return LoadPayloadTupleResult(encodedPayload=None, count=0)
 
     table = LiveDbItem.__table__
-    cols = [table.c.key, table.c.dataType, table.c.rawValue, table.c.displayValue]
+    cols = [
+        table.c.key,
+        table.c.dataType,
+        table.c.rawValue,
+        table.c.displayValue,
+    ]
 
     session = dbSessionCreator()
     try:
@@ -101,7 +118,10 @@ def qryChunk(
         sql = sql.offset(offset).limit(limit)
 
         return getTuplesPayloadBlocking(
-            dbSessionCreator, sql, LiveDbDisplayValueTuple.sqlCoreLoad, fetchSize=limit
+            dbSessionCreator,
+            sql,
+            LiveDbDisplayValueTuple.sqlCoreLoad,
+            fetchSize=limit,
         )
 
     finally:
